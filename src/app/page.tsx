@@ -1,103 +1,197 @@
-import Image from "next/image";
+"use client";
+
+import Link from "next/link";
+import { Header, Footer, EventCard } from "@/components";
+import type { EventCardData } from "@/components";
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const features = [
+    {
+      icon: "ri-ticket-2-line",
+      title: "簡単チケット予約",
+      description: "わずか数クリックでイベントチケットを予約できます",
+    },
+    {
+      icon: "ri-qr-code-line",
+      title: "QRコード入場",
+      description: "スマートフォンでQRコードを表示して入場",
+    },
+    {
+      icon: "ri-shield-check-line",
+      title: "安全な決済",
+      description: "安全で確実な決済システムで安心してお支払い",
+    },
+    {
+      icon: "ri-customer-service-2-line",
+      title: "24時間サポート",
+      description: "いつでもお客様をサポートいたします",
+    },
+  ];
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
+  const upcomingEvents: EventCardData[] = [
+    {
+      id: 1,
+      title: "東京国際展示会2024",
+      date: "2024-03-15",
+      venue: "東京ビッグサイト",
+      price: 3500,
+      image:
+        "https://readdy.ai/api/search-image?query=modern%20exhibition%20hall%20with%20technology%2C%20professional%20lighting%2C%20clean%20white%20background%2C%20corporate%20atmosphere%2C%20high-tech%20booths%20and%20displays&width=400&height=250&seq=1&orientation=landscape",
+      status: "published",
+      category: "展示会"
+    },
+    {
+      id: 2,
+      title: "ホテル春の特別ディナー",
+      date: "2024-03-20",
+      venue: "グランドホテル東京",
+      price: 12000,
+      image:
+        "https://readdy.ai/api/search-image?query=elegant%20hotel%20dining%20room%20with%20beautiful%20table%20settings%2C%20warm%20lighting%2C%20luxury%20atmosphere%2C%20fine%20dining%20setup%2C%20sophisticated%20interior%20design&width=400&height=250&seq=2&orientation=landscape",
+      status: "published",
+      category: "グルメ"
+    },
+    {
+      id: 3,
+      title: "ビジネスセミナー2024",
+      date: "2024-03-25",
+      venue: "品川コンベンションセンター",
+      price: 8000,
+      image:
+        "https://readdy.ai/api/search-image?query=modern%20conference%20room%20with%20professional%20presentation%20setup%2C%20business%20atmosphere%2C%20clean%20design%2C%20people%20networking%2C%20corporate%20event%20setting&width=400&height=250&seq=3&orientation=landscape",
+      status: "published",
+      category: "セミナー"
+    },
+  ];
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+
+      <main>
+        <section
+          className="relative h-screen flex items-center justify-center text-white"
+          style={{
+            backgroundImage:
+              "url(https://readdy.ai/api/search-image?query=modern%20event%20venue%20with%20elegant%20lighting%2C%20spacious%20interior%2C%20professional%20atmosphere%2C%20people%20enjoying%20events%2C%20sophisticated%20design%2C%20warm%20and%20inviting%20ambiance&width=1920&height=1080&seq=4&orientation=landscape)",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+        >
+          <div className="absolute inset-0 bg-black/50"></div>
+          <div className="relative z-10 text-center max-w-4xl mx-auto px-6">
+            <h1 className="text-5xl md:text-6xl font-bold mb-6">
+              お気に入りのイベントを
+              <br />
+              簡単予約
+            </h1>
+            <p className="text-xl md:text-2xl mb-8 text-gray-200">
+              ホテル・展示会・特別イベントのチケットをオンラインで簡単予約
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link
+                href="/events"
+                className="bg-white text-blue-600 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-50 transition-all duration-300 shadow-lg hover:shadow-xl whitespace-nowrap cursor-pointer"
+              >
+                イベントを探す
+              </Link>
+              <Link
+                href="/events"
+                className="bg-transparent border-2 border-white hover:bg-white hover:text-black text-white px-8 py-4 rounded-lg text-lg font-semibold whitespace-nowrap cursor-pointer"
+              >
+                使い方を見る
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        <section className="py-20 bg-white">
+          <div className="max-w-6xl mx-auto px-6">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl font-bold text-gray-900 mb-4">
+                TicketHubの特徴
+              </h2>
+              <p className="text-xl text-gray-600">
+                簡単・安全・便利なチケット予約体験をお届けします
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {features.map((feature, index) => (
+                <div
+                  key={index}
+                  className="text-center p-6 rounded-xl bg-gray-50 hover:bg-blue-50 transition-colors"
+                >
+                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i className={`${feature.icon} text-2xl text-blue-600`}></i>
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    {feature.title}
+                  </h3>
+                  <p className="text-gray-600">{feature.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="py-20 bg-gray-50">
+          <div className="max-w-6xl mx-auto px-6">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl font-bold text-gray-900 mb-4">
+                開催予定のイベント
+              </h2>
+              <p className="text-xl text-gray-600">
+                今すぐ予約できる注目のイベント
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {upcomingEvents.map((event) => (
+                <EventCard
+                  key={event.id}
+                  event={event}
+                  variant="default"
+                />
+              ))}
+            </div>
+
+            <div className="text-center mt-12">
+              <Link
+                href="/events"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg text-lg font-semibold whitespace-nowrap cursor-pointer"
+              >
+                すべてのイベントを見る
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        <section className="py-20 bg-blue-600 text-white">
+          <div className="max-w-4xl mx-auto px-6 text-center">
+            <h2 className="text-4xl font-bold mb-6">まずは会員登録から</h2>
+            <p className="text-xl mb-8 text-blue-100">
+              無料の会員登録で、お気に入りのイベントをすぐに予約できます
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link
+                href="/register"
+                className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 rounded-lg text-lg font-semibold whitespace-nowrap cursor-pointer"
+              >
+                無料で会員登録
+              </Link>
+              <Link
+                href="/events"
+                className="bg-transparent border-2 border-white hover:bg-white hover:text-blue-600 text-white px-8 py-4 rounded-lg text-lg font-semibold whitespace-nowrap cursor-pointer"
+              >
+                イベントを見る
+              </Link>
+            </div>
+          </div>
+        </section>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+      <Footer />
     </div>
   );
 }
