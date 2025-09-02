@@ -20,6 +20,17 @@
           }
         ]
       }
+    ],
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -c \"[System.Media.SystemSounds]::Beep.Play()\""
+          }
+        ]
+      }
     ]
   }
 }
