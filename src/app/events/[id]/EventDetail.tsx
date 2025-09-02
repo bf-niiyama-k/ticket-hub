@@ -30,7 +30,7 @@ export default function EventDetail({ eventId }: EventDetailProps) {
       category: "exhibition",
       status: "販売中",
       image:
-        "https://readdy.ai/api/search-image?query=modern%20technology%20exhibition%20with%20innovative%20displays%2C%20professional%20atmosphere%2C%20bright%20lighting%2C%20tech%20booths%20and%20interactive%20demonstrations&width=800&height=400&seq=11&orientation=landscape",
+        "/img/event.jpg",
       organizer: "日本テクノロジー協会",
       contact: "info@techexpo2024.jp",
     },
@@ -48,7 +48,7 @@ export default function EventDetail({ eventId }: EventDetailProps) {
       category: "dinner",
       status: "販売中",
       image:
-        "https://readdy.ai/api/search-image?query=elegant%20hotel%20restaurant%20with%20fine%20dining%20setup%2C%20luxurious%20atmosphere%2C%20beautiful%20table%20settings%2C%20warm%20ambient%20lighting&width=800&height=400&seq=12&orientation=landscape",
+        "/img/event.jpg",
       organizer: "グランドホテル東京",
       contact: "dining@grandhotel-tokyo.com",
     },
@@ -168,6 +168,7 @@ export default function EventDetail({ eventId }: EventDetailProps) {
             alt={event.title}
             fill
             className="object-cover object-top"
+            unoptimized={true}
           />
           <div className="absolute inset-0 bg-black/40"></div>
           <div className="absolute inset-0 flex items-end">

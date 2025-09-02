@@ -13,11 +13,11 @@ export default function PurchaseCompletePage() {
     // QRコード生成のシミュレーション
     const generateQRCode = () => {
       const ticketId = "TICKET-" + Date.now();
-      setQrCode(
-        `https://readdy.ai/api/search-image?query=QR%20code%20for%20event%20ticket%20with%20black%20squares%20on%20white%20background%2C%20clean%20design%2C%20scannable%20format&width=200&height=200&seq=${ticketId}&orientation=squarish`
-      );
+      // 実際のQRコード生成ロジックは今後実装予定
+      setQrCode("/img/event.jpg");
+      console.log("Generated ticket ID:", ticketId);
     };
-
+    
     generateQRCode();
   }, []);
 
@@ -83,6 +83,7 @@ export default function PurchaseCompletePage() {
                     width={192}
                     height={192}
                     className="w-48 h-48 mx-auto rounded-lg"
+                    unoptimized={true}
                   />
                 ) : (
                   <div className="w-48 h-48 bg-gray-200 rounded-lg mx-auto flex items-center justify-center">

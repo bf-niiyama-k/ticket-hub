@@ -34,7 +34,7 @@ export default function EventsPage() {
       price: 3500,
       status: "販売中",
       image:
-        "https://readdy.ai/api/search-image?query=modern%20technology%20exhibition%20with%20innovative%20displays%2C%20professional%20atmosphere%2C%20bright%20lighting%2C%20tech%20booths%20and%20interactive%20demonstrations&width=400&height=250&seq=5&orientation=landscape",
+        "/img/event.jpg",
     },
     {
       id: 2,
@@ -49,7 +49,7 @@ export default function EventsPage() {
       price: 12000,
       status: "販売中",
       image:
-        "https://readdy.ai/api/search-image?query=elegant%20hotel%20restaurant%20with%20fine%20dining%20setup%2C%20luxurious%20atmosphere%2C%20beautiful%20table%20settings%2C%20warm%20ambient%20lighting&width=400&height=250&seq=6&orientation=landscape",
+        "/img/event.jpg",
     },
     {
       id: 3,
@@ -64,7 +64,7 @@ export default function EventsPage() {
       price: 8000,
       status: "販売中",
       image:
-        "https://readdy.ai/api/search-image?query=professional%20business%20conference%20room%20with%20presentation%20stage%2C%20modern%20design%2C%20networking%20area%2C%20corporate%20atmosphere&width=400&height=250&seq=7&orientation=landscape",
+        "/img/event.jpg",
     },
     {
       id: 4,
@@ -79,7 +79,7 @@ export default function EventsPage() {
       price: 2500,
       status: "販売中",
       image:
-        "https://readdy.ai/api/search-image?query=modern%20art%20gallery%20with%20contemporary%20artworks%2C%20white%20walls%2C%20professional%20lighting%2C%20visitors%20appreciating%20art%2C%20creative%20atmosphere&width=400&height=250&seq=8&orientation=landscape",
+        "/img/event.jpg",
     },
     {
       id: 5,
@@ -94,7 +94,7 @@ export default function EventsPage() {
       price: 15000,
       status: "残りわずか",
       image:
-        "https://readdy.ai/api/search-image?query=large%20technology%20conference%20with%20multiple%20stages%2C%20attendees%20networking%2C%20modern%20venue%2C%20IT%20professionals%20presenting&width=400&height=250&seq=9&orientation=landscape",
+        "/img/event.jpg",
     },
     {
       id: 6,
@@ -109,7 +109,7 @@ export default function EventsPage() {
       price: 9500,
       status: "販売中",
       image:
-        "https://readdy.ai/api/search-image?query=elegant%20wine%20tasting%20event%20with%20various%20wine%20bottles%2C%20cheese%20platters%2C%20sophisticated%20atmosphere%2C%20luxury%20hotel%20setting&width=400&height=250&seq=10&orientation=landscape",
+        "/img/event.jpg",
     },
   ];
 

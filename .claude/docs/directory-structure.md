@@ -1,7 +1,7 @@
 
 # プロジェクト ディレクトリ構造
 
-最終更新: 2025年9月2日 (UI再構造化タスク完了後)
+最終更新: 2025年9月2日 (Supabase認証・データベース基盤セットアップ完了後)
 
 ## src/ ディレクトリ構造
 
@@ -23,6 +23,9 @@ src/
 │   │   ├── scanner/            # QRスキャナーページ
 │   │   │   └── page.tsx
 │   │   └── page.tsx            # 管理画面メイン (✅ AdminLayout適用済み)
+│   ├── auth/                   # ✅ 認証関連 (新規追加)
+│   │   └── callback/           # OAuth認証コールバック
+│   │       └── page.tsx
 │   ├── checkout/               # チェックアウトページ
 │   │   └── page.tsx
 │   ├── events/                 # イベント関連
@@ -72,13 +75,60 @@ src/
 │   └── index.ts                # 全体統合エクスポート
 │
 ├── hooks/                      # カスタムフック (今後追加予定)
-├── lib/                        # ユーティリティ
+├── lib/                        # ライブラリ・ユーティリティ
+│   ├── auth/                   # ✅ 認証機能 (新規追加)
+│   │   └── index.ts            # 認証ユーティリティ関数
+│   ├── supabase/               # ✅ Supabase設定 (新規追加)
+│   │   ├── client.ts           # クライアント設定
+│   │   ├── server.ts           # サーバーサイド設定
+│   │   ├── types.ts            # データベース型定義
+│   │   └── index.ts            # エクスポート統合
 │   └── utils.ts                # ✅ shadcn/ui cn()関数
 ├── types/                      # 型定義 (今後追加予定)
 └── utils/                      # ヘルパー関数 (今後追加予定)
 ```
 
-## 主要な変更点 (UI再構造化)
+## プロジェクトルート構造追加
+
+```
+ticket-hub/
+├── .claude/                    # Claude Code設定・ドキュメント
+│   ├── docs/                   # プロジェクト設計ドキュメント
+│   │   ├── auth-design.md      # ✅ 認証システム設計 (新規)
+│   │   ├── database-schema.md  # ✅ データベース設計 (新規)
+│   │   ├── directory-structure.md
+│   │   ├── supabase-setup-complete.md # ✅ セットアップ完了レポート (新規)
+│   │   └── ui-restructuring-guide.md
+│   └── tasks/                  # タスク管理
+├── supabase/                   # ✅ Supabase設定 (新規追加)
+│   └── migrations/             # データベースマイグレーション
+│       ├── 001_create_initial_tables.sql
+│       └── 002_setup_row_level_security.sql
+├── .env.example               # ✅ 環境変数テンプレート (新規)
+└── [既存の設定ファイル...]
+```
+
+## 主要な変更点 (Supabase認証・データベース基盤セットアップ)
+
+### ✅ 新規追加（認証・データベース）
+- `src/lib/supabase/` - Supabaseクライアント設定 (4ファイル)
+- `src/lib/auth/` - 認証ユーティリティ関数
+- `src/app/auth/callback/` - OAuth認証コールバックページ
+- `supabase/migrations/` - データベースマイグレーションSQL (2ファイル)
+- `.env.example` - 環境変数設定テンプレート
+- `.claude/docs/` - 設計ドキュメント (3ファイル)
+
+### ✅ インストール済み
+- `@supabase/supabase-js` - Supabaseクライアント
+- `@supabase/ssr` - サーバーサイドレンダリング対応
+
+### ⚠️ 今後対応予定
+- Supabase プロジェクトでのマイグレーション実行
+- Google OAuth プロバイダー設定
+- 認証UI コンポーネント実装
+- セッション管理ミドルウェア実装
+
+## 従来の変更点 (UI再構造化)
 
 ### ✅ 新規追加
 - `components/ui/` - shadcn/ui基本コンポーネント (10ファイル)

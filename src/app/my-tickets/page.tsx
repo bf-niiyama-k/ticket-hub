@@ -23,9 +23,9 @@ export default function MyTicketsPage() {
         purchaseDate: "2024年2月1日",
         status: "利用可能",
         qrCode:
-          "https://readdy.ai/api/search-image?query=QR%20code%20for%20event%20ticket%20with%20black%20squares%20on%20white%20background%2C%20clean%20design%2C%20scannable%20format&width=150&height=150&seq=13&orientation=squarish",
+          "/img/event.jpg",
         image:
-          "https://readdy.ai/api/search-image?query=modern%20technology%20exhibition%20with%20innovative%20displays%2C%20professional%20atmosphere%2C%20bright%20lighting%2C%20tech%20booths%20and%20interactive%20demonstrations&width=300&height=200&seq=14&orientation=landscape",
+          "/img/event.jpg",
       },
       {
         id: 2,
@@ -39,9 +39,9 @@ export default function MyTicketsPage() {
         purchaseDate: "2024年2月5日",
         status: "利用可能",
         qrCode:
-          "https://readdy.ai/api/search-image?query=QR%20code%20for%20event%20ticket%20with%20black%20squares%20on%20white%20background%2C%20clean%20design%2C%20scannable%20format&width=150&height=150&seq=15&orientation=squarish",
+          "/img/event.jpg",
         image:
-          "https://readdy.ai/api/search-image?query=elegant%20hotel%20restaurant%20with%20fine%20dining%20setup%2C%20luxurious%20atmosphere%2C%20beautiful%20table%20settings%2C%20warm%20ambient%20lighting&width=300&height=200&seq=16&orientation=landscape",
+          "/img/event.jpg",
       },
     ],
     past: [
@@ -57,9 +57,9 @@ export default function MyTicketsPage() {
         purchaseDate: "2024年1月1日",
         status: "利用済み",
         qrCode:
-          "https://readdy.ai/api/search-image?query=QR%20code%20for%20event%20ticket%20with%20black%20squares%20on%20white%20background%2C%20clean%20design%2C%20scannable%20format&width=150&height=150&seq=17&orientation=squarish",
+          "/img/event.jpg",
         image:
-          "https://readdy.ai/api/search-image?query=modern%20art%20gallery%20with%20contemporary%20artworks%2C%20white%20walls%2C%20professional%20lighting%2C%20visitors%20appreciating%20art%2C%20creative%20atmosphere&width=300&height=200&seq=18&orientation=landscape",
+          "/img/event.jpg",
       },
     ],
   };
@@ -133,6 +133,7 @@ export default function MyTicketsPage() {
                         width={400}
                         height={192}
                         className="w-full h-48 md:h-full object-cover object-top"
+                        unoptimized={true}
                       />
                     </div>
 
@@ -169,6 +170,7 @@ export default function MyTicketsPage() {
                               width={80}
                               height={80}
                               className="w-20 h-20 border rounded-lg mb-2"
+                              unoptimized={true}
                             />
                             <p className="text-xs text-gray-500">
                               入場用QRコード

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Header, Footer, EventCard } from "@/components";
 import type { EventCardData } from "@/components";
+import Image from "next/image";
 
 export default function Home() {
   const features = [
@@ -35,10 +36,9 @@ export default function Home() {
       date: "2024-03-15",
       venue: "東京ビッグサイト",
       price: 3500,
-      image:
-        "https://readdy.ai/api/search-image?query=modern%20exhibition%20hall%20with%20technology%2C%20professional%20lighting%2C%20clean%20white%20background%2C%20corporate%20atmosphere%2C%20high-tech%20booths%20and%20displays&width=400&height=250&seq=1&orientation=landscape",
+      image: "/img/event.jpg",
       status: "published",
-      category: "展示会"
+      category: "展示会",
     },
     {
       id: 2,
@@ -46,10 +46,9 @@ export default function Home() {
       date: "2024-03-20",
       venue: "グランドホテル東京",
       price: 12000,
-      image:
-        "https://readdy.ai/api/search-image?query=elegant%20hotel%20dining%20room%20with%20beautiful%20table%20settings%2C%20warm%20lighting%2C%20luxury%20atmosphere%2C%20fine%20dining%20setup%2C%20sophisticated%20interior%20design&width=400&height=250&seq=2&orientation=landscape",
+      image: "/img/event.jpg",
       status: "published",
-      category: "グルメ"
+      category: "グルメ",
     },
     {
       id: 3,
@@ -57,10 +56,9 @@ export default function Home() {
       date: "2024-03-25",
       venue: "品川コンベンションセンター",
       price: 8000,
-      image:
-        "https://readdy.ai/api/search-image?query=modern%20conference%20room%20with%20professional%20presentation%20setup%2C%20business%20atmosphere%2C%20clean%20design%2C%20people%20networking%2C%20corporate%20event%20setting&width=400&height=250&seq=3&orientation=landscape",
+      image: "/img/event.jpg",
       status: "published",
-      category: "セミナー"
+      category: "セミナー",
     },
   ];
 
@@ -70,14 +68,14 @@ export default function Home() {
 
       <main>
         <section
-          className="relative h-screen flex items-center justify-center text-white"
-          style={{
-            backgroundImage:
-              "url(https://readdy.ai/api/search-image?query=modern%20event%20venue%20with%20elegant%20lighting%2C%20spacious%20interior%2C%20professional%20atmosphere%2C%20people%20enjoying%20events%2C%20sophisticated%20design%2C%20warm%20and%20inviting%20ambiance&width=1920&height=1080&seq=4&orientation=landscape)",
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-          }}
-        >
+                    className="relative h-screen flex items-center justify-center text-white">
+          <Image
+            src="/img/fv.jpg"
+            alt="ファーストビュー"
+            fill
+            className="object-cover object-center"
+            priority
+          />
           <div className="absolute inset-0 bg-black/50"></div>
           <div className="relative z-10 text-center max-w-4xl mx-auto px-6">
             <h1 className="text-5xl md:text-6xl font-bold mb-6">
@@ -148,11 +146,7 @@ export default function Home() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {upcomingEvents.map((event) => (
-                <EventCard
-                  key={event.id}
-                  event={event}
-                  variant="default"
-                />
+                <EventCard key={event.id} event={event} variant="default" />
               ))}
             </div>
 

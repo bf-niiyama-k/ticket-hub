@@ -18,7 +18,7 @@ export default function EventEdit({ eventId }: EventEditProps) {
     venue: '',
     description: '',
     status: 'draft',
-    image: '',
+    image: '/img/event.jpg',
     ticketTypes: [
       {
         id: 1,
@@ -46,7 +46,7 @@ export default function EventEdit({ eventId }: EventEditProps) {
         venue: 'メインホール',
         description: '春の訪れを祝う特別なコンサートイベントです。著名なアーティストによる素晴らしいパフォーマンスをお楽しみください。',
         status: 'published',
-        image: 'https://readdy.ai/api/search-image?query=elegant%20concert%20hall%20with%20grand%20piano%20and%20warm%20lighting%20creating%20sophisticated%20atmosphere%20for%20spring%20classical%20music%20performance%20with%20beautiful%20stage%20design&width=800&height=400&seq=concert1&orientation=landscape',
+        image: '/img/event.jpg',
         ticketTypes: [
           {
             id: 1,
@@ -85,7 +85,7 @@ export default function EventEdit({ eventId }: EventEditProps) {
         venue: '会議室A',
         description: '最新のビジネストレンドと戦略について学ぶセミナーです。業界のエキスパートが講演します。',
         status: 'draft',
-        image: 'https://readdy.ai/api/search-image?query=modern%20business%20conference%20room%20with%20professional%20presentation%20setup%20clean%20corporate%20environment%20with%20projector%20and%20elegant%20seating%20arrangement&width=800&height=400&seq=seminar1&orientation=landscape',
+        image: '/img/event.jpg',
         ticketTypes: [
           {
             id: 1,
@@ -106,7 +106,7 @@ export default function EventEdit({ eventId }: EventEditProps) {
         venue: '野外ステージ',
         description: '夏の夜に開催される楽しい祭りイベントです。屋台や音楽ライブをお楽しみください。',
         status: 'published',
-        image: 'https://readdy.ai/api/search-image?query=vibrant%20summer%20festival%20with%20colorful%20lanterns%20food%20stalls%20and%20outdoor%20stage%20evening%20atmosphere%20with%20warm%20lighting%20and%20festive%20decorations&width=800&height=400&seq=festival1&orientation=landscape',
+        image: '/img/event.jpg',
         ticketTypes: [
           {
             id: 1,
@@ -534,6 +534,7 @@ export default function EventEdit({ eventId }: EventEditProps) {
                   width={768}
                   height={256}
                   className="w-full h-64 object-cover rounded-lg mb-6"
+                  unoptimized={true}
                 />
                 
                 <h1 className="text-3xl font-bold text-gray-900 mb-4">{event.title}</h1>
