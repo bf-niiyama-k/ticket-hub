@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import Header from "../../../components/layout/Header";
 import Footer from "../../../components/layout/Footer";
 
@@ -162,10 +163,11 @@ export default function EventDetail({ eventId }: EventDetailProps) {
 
       <main>
         <div className="relative h-96 overflow-hidden">
-          <img
+          <Image
             src={event.image}
             alt={event.title}
-            className="w-full h-full object-cover object-top"
+            fill
+            className="object-cover object-top"
           />
           <div className="absolute inset-0 bg-black/40"></div>
           <div className="absolute inset-0 flex items-end">

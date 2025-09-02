@@ -5,9 +5,21 @@
       "Bash(npm run build)",
       "Bash(npm run lint)",
       "Bash(npm run test)",
-      "Bash(powershell.exe:*)",
       "Bash(npx shadcn@latest add:*)"
     ],
     "deny": []
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -c \"[System.Media.SystemSounds]::Beep.Play()\""
+          }
+        ]
+      }
+    ]
   }
 }

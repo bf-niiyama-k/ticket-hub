@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import Header from "../../components/layout/Header";
 import Footer from "../../components/layout/Footer";
 
@@ -76,9 +77,11 @@ export default function PurchaseCompletePage() {
 
               <div className="bg-gray-50 rounded-lg p-8 mb-6">
                 {qrCode ? (
-                  <img
+                  <Image
                     src={qrCode}
                     alt="入場用QRコード"
+                    width={192}
+                    height={192}
                     className="w-48 h-48 mx-auto rounded-lg"
                   />
                 ) : (

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import Header from "../../components/layout/Header";
 import Footer from "../../components/layout/Footer";
 
@@ -126,9 +127,11 @@ export default function MyTicketsPage() {
                 >
                   <div className="md:flex">
                     <div className="md:w-1/3">
-                      <img
+                      <Image
                         src={ticket.image}
                         alt={ticket.eventTitle}
+                        width={400}
+                        height={192}
                         className="w-full h-48 md:h-full object-cover object-top"
                       />
                     </div>
@@ -160,9 +163,11 @@ export default function MyTicketsPage() {
 
                         {ticket.status === "利用可能" && (
                           <div className="text-right">
-                            <img
+                            <Image
                               src={ticket.qrCode}
                               alt="QRコード"
+                              width={80}
+                              height={80}
                               className="w-20 h-20 border rounded-lg mb-2"
                             />
                             <p className="text-xs text-gray-500">

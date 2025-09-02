@@ -50,7 +50,7 @@ export default function ProfilePage() {
     { id: "art", name: "アート・文化", icon: "ri-palette-line" },
   ];
 
-  const handleProfileUpdate = (field: string, value: any) => {
+  const handleProfileUpdate = (field: string, value: string | string[] | object) => {
     setProfileData((prev) => ({ ...prev, [field]: value }));
   };
 

@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface EventEditProps {
   eventId: string;
@@ -527,9 +528,11 @@ export default function EventEdit({ eventId }: EventEditProps) {
             
             <div className="p-6">
               <div className="max-w-3xl mx-auto">
-                <img
+                <Image
                   src={event.image}
                   alt={event.title}
+                  width={768}
+                  height={256}
                   className="w-full h-64 object-cover rounded-lg mb-6"
                 />
                 

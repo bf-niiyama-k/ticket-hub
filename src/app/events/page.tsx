@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import Header from "../../components/layout/Header";
 import Footer from "../../components/layout/Footer";
 
@@ -278,9 +279,11 @@ export default function EventsPage() {
                 className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow"
               >
                 <div className="relative">
-                  <img
+                  <Image
                     src={event.image}
                     alt={event.title}
+                    width={400}
+                    height={192}
                     className="w-full h-48 object-cover object-top"
                   />
                   <div

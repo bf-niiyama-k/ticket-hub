@@ -4,8 +4,22 @@
 import { useState } from 'react';
 import Link from 'next/link';
 
+interface Order {
+  id: string;
+  customerName: string;
+  customerEmail: string;
+  eventTitle: string;
+  ticketType: string;
+  quantity: number;
+  totalAmount: number;
+  orderDate: string;
+  status: string;
+  paymentMethod: string;
+  qrCode: string | null;
+}
+
 export default function OrderManagement() {
-  const [orders, setOrders] = useState([
+  const [orders, setOrders] = useState<Order[]>([
     {
       id: 'ORD-001',
       customerName: '田中太郎',
@@ -60,7 +74,7 @@ export default function OrderManagement() {
     }
   ]);
 
-  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [filterStatus, setFilterStatus] = useState('all');
 
@@ -68,7 +82,7 @@ export default function OrderManagement() {
     filterStatus === 'all' || order.status === filterStatus
   );
 
-  const showOrderDetail = (order: any) => {
+  const showOrderDetail = (order: Order) => {
     setSelectedOrder(order);
     setShowDetailModal(true);
   };

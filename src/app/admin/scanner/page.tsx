@@ -4,9 +4,43 @@
 import { useState } from 'react';
 import Link from 'next/link';
 
+interface Ticket {
+  ticketId: string;
+  customerName: string;
+  customerEmail: string;
+  eventTitle: string;
+  ticketType: string;
+  quantity: number;
+  eventDate: string;
+  eventTime: string;
+  venue: string;
+  isUsed: boolean;
+  purchaseDate: string;
+}
+
+interface ScanResult {
+  ticketId?: string;
+  customerName?: string;
+  eventTitle?: string;
+  scanTime?: string;
+  status: 'valid' | 'invalid' | 'used' | 'confirmed';
+  message?: string;
+  timestamp?: string;
+  ticket?: Ticket;
+}
+
+interface ScanHistoryItem {
+  id: number;
+  ticketId: string;
+  customerName: string;
+  eventTitle: string;
+  scanTime: string;
+  status: 'valid' | 'invalid' | 'used';
+}
+
 export default function QRScanner() {
-  const [scanResult, setScanResult] = useState<any>(null);
-  const [scanHistory, setScanHistory] = useState([
+  const [scanResult, setScanResult] = useState<ScanResult | null>(null);
+  const [scanHistory, setScanHistory] = useState<ScanHistoryItem[]>([
     {id: 1, ticketId: 'QR-123456', customerName: '田中太郎', eventTitle: '春のコンサート2024', scanTime: '2024-03-15 19:30', status: 'valid'},
     {id: 2, ticketId: 'QR-123457', customerName: '佐藤花子', eventTitle: '夏祭り2024', scanTime: '2024-03-15 18:45', status: 'valid'},
     {id: 3, ticketId: 'QR-123458', customerName: '山田次郎', eventTitle: 'ビジネスセミナー', scanTime: '2024-03-15 10:15', status: 'used'}
@@ -14,7 +48,7 @@ export default function QRScanner() {
   const [manualInput, setManualInput] = useState('');
   const [isScanning, setIsScanning] = useState(false);
 
-  const mockTickets = {
+  const mockTickets: Record<string, Ticket> = {
     'QR-123456': {
       ticketId: 'QR-123456',
       customerName: '田中太郎',
@@ -102,7 +136,7 @@ export default function QRScanner() {
         customerName: scanResult.ticket.customerName,
         eventTitle: scanResult.ticket.eventTitle,
         scanTime: new Date().toLocaleString('ja-JP'),
-        status: 'valid'
+        status: 'valid' as const
       };
       
       setScanHistory([newScan, ...scanHistory]);
