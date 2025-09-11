@@ -3,19 +3,28 @@
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { cn, formatDate, formatPrice } from '@/lib/utils';
+import QRCodeDisplay from '../ticket/QRCodeDisplay';
+import { generateQRData, encodeQRData } from '@/lib/qr-generator';
 
 export interface TicketData {
   id: string;
+  eventId: string;
+  userId: string;
   eventTitle: string;
   eventDate: string;
+  eventTime?: string;
   venue: string;
   ticketType: string;
   price: number;
+  quantity: number;
   status: 'active' | 'used' | 'expired' | 'cancelled';
   qrCode?: string;
   seatInfo?: string;
   purchaseDate: string;
+  customerName?: string;
+  customerEmail?: string;
+  orderNumber?: string;
 }
 
 interface TicketCardProps {
@@ -52,24 +61,9 @@ export default function TicketCard({
     }
   };
 
-  const formatDate = (dateStr: string) => {
-    try {
-      const date = new Date(dateStr);
-      return date.toLocaleDateString('ja-JP', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    } catch {
-      return dateStr;
-    }
-  };
-
-  const formatPrice = (price: number) => {
-    return `¥${price.toLocaleString()}`;
-  };
+  // QRコードデータの生成
+  const qrData = generateQRData(ticket.id, ticket.eventId, ticket.userId);
+  const qrCodeValue = encodeQRData(qrData);
 
   if (variant === 'compact') {
     return (
@@ -99,26 +93,27 @@ export default function TicketCard({
             <p className="text-gray-600">{ticket.ticketType}</p>
           </div>
           
-          {/* QRコードプレースホルダー */}
-          <div className="w-48 h-48 mx-auto bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
-            {ticket.qrCode ? (
-              <div className="text-center">
-                <div className="w-40 h-40 bg-black mx-auto mb-2 rounded"></div>
-                <p className="text-xs text-gray-500">QRコード</p>
-              </div>
-            ) : (
-              <div className="text-center text-gray-500">
-                <i className="ri-qr-code-line text-4xl mb-2"></i>
-                <p className="text-sm">QRコード生成中</p>
-              </div>
-            )}
+          {/* QRコード表示 */}
+          <div className="flex justify-center">
+            <QRCodeDisplay
+              value={qrCodeValue}
+              size={200}
+              showBorder={false}
+              className="w-48 h-48"
+            />
           </div>
           
           <div className="space-y-2 text-sm text-gray-600">
-            <p><i className="ri-calendar-line mr-2"></i>{formatDate(ticket.eventDate)}</p>
+            <p><i className="ri-calendar-line mr-2"></i>
+              {formatDate(ticket.eventDate)}
+              {ticket.eventTime && ` ${ticket.eventTime}`}
+            </p>
             <p><i className="ri-map-pin-line mr-2"></i>{ticket.venue}</p>
             {ticket.seatInfo && (
               <p><i className="ri-reserved-line mr-2"></i>{ticket.seatInfo}</p>
+            )}
+            {ticket.quantity > 1 && (
+              <p><i className="ri-ticket-2-line mr-2"></i>枚数: {ticket.quantity}枚</p>
             )}
             <p><i className="ri-ticket-line mr-2"></i>チケットID: {ticket.id}</p>
           </div>

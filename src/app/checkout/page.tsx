@@ -5,14 +5,24 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import Header from "../../components/layout/Header";
 import Footer from "../../components/layout/Footer";
+import { usePayment } from "../../hooks/usePayment";
+import type { PaymentMethod, OrderItem } from "../../types/payment";
 
 function CheckoutContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [step, setStep] = useState(1);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("credit");
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>("credit");
+  
+  // 決済フックを使用
+  const {
+    isProcessing,
+    error: paymentError,
+    createPaymentIntent,
+    confirmPayment,
+    clearError,
+  } = usePayment();
   const [formData, setFormData] = useState({
     email: "",
     firstName: "",
@@ -83,13 +93,74 @@ function CheckoutContent() {
     if (step < 3) setStep(step + 1);
   };
 
-  const handlePurchase = () => {
-    setIsProcessing(true);
+  const handlePurchase = async () => {
+    if (!eventId || !event) {
+      alert("イベント情報が見つかりません");
+      return;
+    }
 
-    setTimeout(() => {
-      setIsProcessing(false);
-      router.push("/purchase-complete");
-    }, 2000);
+    // バリデーション
+    if (!formData.email || !formData.firstName || !formData.lastName) {
+      alert("お名前とメールアドレスは必須項目です");
+      return;
+    }
+
+    if (selectedPaymentMethod === "credit" && (!formData.cardNumber || !formData.expiryDate || !formData.cvv || !formData.cardName)) {
+      alert("クレジットカード情報を正しく入力してください");
+      return;
+    }
+
+    clearError();
+
+    try {
+      // 注文項目を作成
+      const orderItems: OrderItem[] = Object.entries(selectedTickets)
+        .filter(([, count]) => (count as number) > 0)
+        .map(([ticketId, count]) => {
+          const ticket = tickets.find((t) => t.id === ticketId);
+          return {
+            ticketId,
+            ticketName: ticket?.name || "チケット",
+            price: ticket?.price || 0,
+            quantity: count as number,
+          };
+        });
+
+      if (orderItems.length === 0) {
+        alert("チケットを選択してください");
+        return;
+      }
+
+      const totalAmount = getTotalPrice() + Math.floor(getTotalPrice() * 0.05);
+
+      // PaymentIntentを作成
+      const result = await createPaymentIntent({
+        amount: totalAmount,
+        paymentMethod: selectedPaymentMethod,
+        orderItems,
+        customerInfo: formData,
+        eventId,
+      });
+
+      if (result.success) {
+        if (selectedPaymentMethod === "paypay" && result.redirectUrl) {
+          // PayPay決済の場合はリダイレクト
+          window.location.href = result.redirectUrl;
+        } else if (selectedPaymentMethod === "convenience") {
+          // コンビニ決済の場合は完了ページへ
+          router.push(`/purchase-complete?payment_intent=${result.paymentIntentId}&order_id=${result.orderId}&payment_method=convenience`);
+        } else {
+          // クレジットカード決済の場合は決済確認
+          const confirmResult = await confirmPayment(result.paymentIntentId!);
+          if (confirmResult.success) {
+            router.push(`/purchase-complete?payment_intent=${result.paymentIntentId}&order_id=${confirmResult.orderId}&payment_method=credit`);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Payment error:", error);
+      alert("決済処理中にエラーが発生しました");
+    }
   };
 
   if (!event) {
@@ -129,6 +200,28 @@ function CheckoutContent() {
           </div>
           <h1 className="text-3xl font-bold text-gray-900">チケット購入</h1>
         </div>
+
+        {/* エラー表示 */}
+        {paymentError && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-8">
+            <div className="flex items-start">
+              <i className="ri-error-warning-line text-red-600 mr-3 mt-1"></i>
+              <div className="text-sm text-red-800">
+                <p className="font-semibold mb-1">エラーが発生しました</p>
+                <p>{paymentError.message}</p>
+                {paymentError.code && (
+                  <p className="text-xs mt-1 text-red-600">エラーコード: {paymentError.code}</p>
+                )}
+              </div>
+              <button
+                onClick={clearError}
+                className="ml-auto text-red-600 hover:text-red-700"
+              >
+                <i className="ri-close-line"></i>
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* プログレスバー */}
         <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
@@ -281,7 +374,7 @@ function CheckoutContent() {
                   {paymentMethods.map((method) => (
                     <div
                       key={method.id}
-                      onClick={() => setSelectedPaymentMethod(method.id)}
+                      onClick={() => setSelectedPaymentMethod(method.id as PaymentMethod)}
                       className={`border-2 rounded-lg p-4 cursor-pointer transition-colors ${
                         selectedPaymentMethod === method.id
                           ? "border-blue-500 bg-blue-50"

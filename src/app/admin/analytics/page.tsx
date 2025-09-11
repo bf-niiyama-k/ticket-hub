@@ -3,50 +3,74 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useAnalytics } from '@/hooks';
+import { useAuth } from '@/lib/auth';
 
 export default function Analytics() {
+  const { user } = useAuth();
+  const { stats, eventSales, loading, error } = useAnalytics();
   const [dateRange, setDateRange] = useState('7days');
-  const [isPremiumUser] = useState(false); // 実際にはSupabaseから取得
+  
+  // プレミアムユーザー判定（ここでは仮実装）
+  const isPremiumUser = user?.role === 'admin';
 
-  // サンプルデータ
+  // ダミーデータ（実際の実装では、useAnalyticsから取得）
   const salesData = [
-    { date: '3/9', sales: 45000, tickets: 15 },
-    { date: '3/10', sales: 68000, tickets: 22 },
-    { date: '3/11', sales: 52000, tickets: 18 },
-    { date: '3/12', sales: 89000, tickets: 31 },
-    { date: '3/13', sales: 76000, tickets: 28 },
-    { date: '3/14', sales: 94000, tickets: 35 },
-    { date: '3/15', sales: 112000, tickets: 42 }
-  ];
-
-  const eventData = [
-    { name: '春のコンサート2024', sales: 450000, tickets: 150 },
-    { name: '夏祭り2024', sales: 960000, tickets: 320 },
-    { name: 'ビジネスセミナー', sales: 250000, tickets: 50 },
-    { name: '秋の音楽祭', sales: 180000, tickets: 60 }
+    { date: '2024/01/01', sales: 150000, tickets: 50 },
+    { date: '2024/01/02', sales: 180000, tickets: 60 },
+    { date: '2024/01/03', sales: 120000, tickets: 40 },
+    { date: '2024/01/04', sales: 200000, tickets: 65 },
+    { date: '2024/01/05', sales: 160000, tickets: 55 },
+    { date: '2024/01/06', sales: 220000, tickets: 75 },
+    { date: '2024/01/07', sales: 190000, tickets: 62 }
   ];
 
   const ticketTypeData = [
-    { name: 'VIPチケット', value: 35, color: '#8B5CF6' },
-    { name: '一般チケット', value: 50, color: '#3B82F6' },
-    { name: '学生チケット', value: 15, color: '#10B981' }
+    { name: '一般チケット', value: 45, color: '#3B82F6' },
+    { name: 'VIPチケット', value: 25, color: '#10B981' },
+    { name: '学生チケット', value: 20, color: '#F59E0B' },
+    { name: 'グループチケット', value: 10, color: '#EF4444' }
   ];
 
   const monthlyData = [
-    { month: '1月', revenue: 850000, customers: 120 },
-    { month: '2月', revenue: 920000, customers: 135 },
-    { month: '3月', revenue: 1850000, customers: 245 }
+    { month: '2024/01', revenue: 500000, customers: 120 },
+    { month: '2024/02', revenue: 650000, customers: 140 },
+    { month: '2024/03', revenue: 800000, customers: 180 },
+    { month: '2024/04', revenue: 750000, customers: 165 },
+    { month: '2024/05', revenue: 900000, customers: 200 },
+    { month: '2024/06', revenue: 850000, customers: 190 }
   ];
 
-  const stats = {
-    totalRevenue: 3847200,
-    totalTickets: 1248,
-    totalCustomers: 456,
-    avgOrderValue: 8500,
-    revenueGrowth: 15.8,
-    ticketGrowth: 12.3,
-    customerGrowth: 18.5
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">読み込み中...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600">エラーが発生しました: {error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!stats) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">データがありません</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -134,7 +158,7 @@ export default function Analytics() {
               </div>
               <div className="mt-2 flex items-center">
                 <i className="ri-arrow-up-line text-green-500 text-sm w-4 h-4 flex items-center justify-center mr-1"></i>
-                <span className="text-sm text-green-600">+{stats.revenueGrowth}%</span>
+                <span className="text-sm text-green-600">+{stats.revenueGrowth || 0}%</span>
                 <span className="text-sm text-gray-500 ml-2">前月比</span>
               </div>
               {!isPremiumUser && (
@@ -156,7 +180,7 @@ export default function Analytics() {
               </div>
               <div className="mt-2 flex items-center">
                 <i className="ri-arrow-up-line text-green-500 text-sm w-4 h-4 flex items-center justify-center mr-1"></i>
-                <span className="text-sm text-green-600">+{stats.ticketGrowth}%</span>
+                <span className="text-sm text-green-600">+{stats.ticketGrowth || 0}%</span>
                 <span className="text-sm text-gray-500 ml-2">前月比</span>
               </div>
               {!isPremiumUser && (
@@ -178,7 +202,7 @@ export default function Analytics() {
               </div>
               <div className="mt-2 flex items-center">
                 <i className="ri-arrow-up-line text-green-500 text-sm w-4 h-4 flex items-center justify-center mr-1"></i>
-                <span className="text-sm text-green-600">+{stats.customerGrowth}%</span>
+                <span className="text-sm text-green-600">+{stats.customerGrowth || 0}%</span>
                 <span className="text-sm text-gray-500 ml-2">前月比</span>
               </div>
               {!isPremiumUser && (
@@ -277,14 +301,14 @@ export default function Analytics() {
             <div className="bg-white rounded-lg shadow-sm p-6 relative">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">イベント別売上</h3>
               <div className="space-y-4">
-                {eventData.map((event, index) => {
-                  const maxSales = Math.max(...eventData.map(e => e.sales));
-                  const widthPercentage = (event.sales / maxSales) * 100;
+                {eventSales.slice(0, 5).map((event, index) => {
+                  const maxSales = Math.max(...eventSales.map(e => e.revenue));
+                  const widthPercentage = maxSales > 0 ? (event.revenue / maxSales) * 100 : 0;
                   return (
                     <div key={index} className="space-y-2">
                       <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-gray-700 truncate max-w-[150px]">{event.name}</span>
-                        <span className="text-sm font-semibold text-gray-900">¥{event.sales.toLocaleString()}</span>
+                        <span className="text-sm font-medium text-gray-700 truncate max-w-[150px]">{event.eventTitle}</span>
+                        <span className="text-sm font-semibold text-gray-900">¥{event.revenue.toLocaleString()}</span>
                       </div>
                       <div className="w-full h-3 bg-gray-200 rounded-full">
                         <div 
@@ -292,10 +316,13 @@ export default function Analytics() {
                           style={{width: `${widthPercentage}%`}}
                         ></div>
                       </div>
-                      <div className="text-xs text-gray-500">{event.tickets}枚販売</div>
+                      <div className="text-xs text-gray-500">{event.tickets}枚販売 ({event.percentage.toFixed(1)}%)</div>
                     </div>
                   );
                 })}
+                {eventSales.length === 0 && (
+                  <p className="text-gray-500 text-center py-4">売上データがありません</p>
+                )}
               </div>
               {!isPremiumUser && (
                 <div className="absolute inset-0 bg-white bg-opacity-50 backdrop-blur-sm rounded-lg flex items-center justify-center">
@@ -369,27 +396,36 @@ export default function Analytics() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {eventData.map((event, index) => (
+                  {eventSales.map((event, index) => (
                     <tr key={index}>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{event.name}</div>
+                        <div className="text-sm font-medium text-gray-900">{event.eventTitle}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">{event.tickets}枚</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">¥{event.sales.toLocaleString()}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">¥{Math.round(event.sales / event.tickets).toLocaleString()}</div>
+                        <div className="text-sm font-medium text-gray-900">¥{event.revenue.toLocaleString()}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
-                          {((event.sales / eventData.reduce((sum, e) => sum + e.sales, 0)) * 100).toFixed(1)}%
+                          ¥{event.tickets > 0 ? Math.round(event.revenue / event.tickets).toLocaleString() : '0'}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {event.percentage.toFixed(1)}%
                         </div>
                       </td>
                     </tr>
                   ))}
+                  {eventSales.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
+                        データがありません
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>

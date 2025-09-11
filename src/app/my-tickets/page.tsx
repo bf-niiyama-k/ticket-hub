@@ -5,73 +5,101 @@ import Link from "next/link";
 import Image from "next/image";
 import Header from "../../components/layout/Header";
 import Footer from "../../components/layout/Footer";
+import QRCodeModal from "../../components/ticket/QRCodeModal";
+import { Ticket } from "../../types/ticket";
+import { generateTicketPDF } from "../../lib/pdf-generator";
 
 export default function MyTicketsPage() {
   const [activeTab, setActiveTab] = useState("upcoming");
+  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
+  const [isQRModalOpen, setIsQRModalOpen] = useState(false);
 
   const tickets = {
     upcoming: [
       {
-        id: 1,
+        id: "ticket-001",
+        eventId: "event-001",
+        userId: "user-001",
         eventTitle: "東京国際展示会2024",
-        eventDate: "2024年3月15日",
+        eventDate: "2024-03-15",
         eventTime: "10:00 - 18:00",
         venue: "東京ビッグサイト",
         ticketType: "一般入場券",
+        price: 3000,
         quantity: 2,
         orderNumber: "ORDER-12345678",
-        purchaseDate: "2024年2月1日",
-        status: "利用可能",
-        qrCode:
-          "/img/event.jpg",
-        image:
-          "/img/event.jpg",
+        purchaseDate: "2024-02-01",
+        status: "active" as const,
+        customerName: "田中太郎",
+        customerEmail: "tanaka@example.com",
+        image: "/img/event.jpg",
+        createdAt: "2024-02-01T10:00:00Z",
+        updatedAt: "2024-02-01T10:00:00Z",
       },
       {
-        id: 2,
+        id: "ticket-002",
+        eventId: "event-002",
+        userId: "user-001",
         eventTitle: "ホテル春の特別ディナー",
-        eventDate: "2024年3月20日",
+        eventDate: "2024-03-20",
         eventTime: "19:00 - 22:00",
         venue: "グランドホテル東京",
         ticketType: "ワインペアリングコース",
+        price: 12000,
         quantity: 1,
         orderNumber: "ORDER-12345679",
-        purchaseDate: "2024年2月5日",
-        status: "利用可能",
-        qrCode:
-          "/img/event.jpg",
-        image:
-          "/img/event.jpg",
+        purchaseDate: "2024-02-05",
+        status: "active" as const,
+        customerName: "田中太郎",
+        customerEmail: "tanaka@example.com",
+        image: "/img/event.jpg",
+        createdAt: "2024-02-05T10:00:00Z",
+        updatedAt: "2024-02-05T10:00:00Z",
       },
     ],
     past: [
       {
-        id: 3,
+        id: "ticket-003",
+        eventId: "event-003",
+        userId: "user-001",
         eventTitle: "冬のアートフェスティバル2024",
-        eventDate: "2024年1月15日",
+        eventDate: "2024-01-15",
         eventTime: "11:00 - 19:00",
         venue: "六本木アートセンター",
         ticketType: "一般入場券",
+        price: 2500,
         quantity: 1,
         orderNumber: "ORDER-12345677",
-        purchaseDate: "2024年1月1日",
-        status: "利用済み",
-        qrCode:
-          "/img/event.jpg",
-        image:
-          "/img/event.jpg",
+        purchaseDate: "2024-01-01",
+        status: "used" as const,
+        customerName: "田中太郎",
+        customerEmail: "tanaka@example.com",
+        image: "/img/event.jpg",
+        createdAt: "2024-01-01T10:00:00Z",
+        updatedAt: "2024-01-15T11:00:00Z",
       },
     ],
   };
 
   const currentTickets = tickets[activeTab as keyof typeof tickets];
 
-  const handleDownloadTicket = (ticketId: number) => {
-    alert(`チケット${ticketId}をダウンロードしました（シミュレーション）`);
+  const handleDownloadTicket = async (ticket: Ticket) => {
+    try {
+      await generateTicketPDF(ticket);
+    } catch (error) {
+      console.error('PDF generation failed:', error);
+      alert('PDFの生成に失敗しました。しばらく時間をおいて再度お試しください。');
+    }
   };
 
-  const handleShowQR = (ticketId: number) => {
-    alert(`チケット${ticketId}のQRコードを表示しました（シミュレーション）`);
+  const handleShowQR = (ticket: Ticket) => {
+    setSelectedTicket(ticket);
+    setIsQRModalOpen(true);
+  };
+
+  const handleCloseQRModal = () => {
+    setIsQRModalOpen(false);
+    setSelectedTicket(null);
   };
 
   return (
@@ -143,12 +171,13 @@ export default function MyTicketsPage() {
                           <div className="flex items-center space-x-2 mb-2">
                             <span
                               className={`px-3 py-1 rounded-full text-xs font-medium ${
-                                ticket.status === "利用可能"
+                                ticket.status === "active"
                                   ? "bg-green-100 text-green-800"
                                   : "bg-gray-100 text-gray-800"
                               }`}
                             >
-                              {ticket.status}
+                              {ticket.status === "active" ? "利用可能" : 
+                               ticket.status === "used" ? "使用済み" : "期限切れ"}
                             </span>
                             <span className="text-sm text-gray-500">
                               注文番号: {ticket.orderNumber}
@@ -162,16 +191,14 @@ export default function MyTicketsPage() {
                           </p>
                         </div>
 
-                        {ticket.status === "利用可能" && (
+                        {ticket.status === "active" && (
                           <div className="text-right">
-                            <Image
-                              src={ticket.qrCode}
-                              alt="QRコード"
-                              width={80}
-                              height={80}
-                              className="w-20 h-20 border rounded-lg mb-2"
-                              unoptimized={true}
-                            />
+                            <div 
+                              className="w-20 h-20 border rounded-lg mb-2 bg-gray-100 flex items-center justify-center cursor-pointer hover:bg-gray-200 transition-colors"
+                              onClick={() => handleShowQR(ticket)}
+                            >
+                              <i className="ri-qr-code-line text-2xl text-gray-600"></i>
+                            </div>
                             <p className="text-xs text-gray-500">
                               入場用QRコード
                             </p>
@@ -201,17 +228,17 @@ export default function MyTicketsPage() {
                       </div>
 
                       <div className="flex flex-wrap gap-3">
-                        {ticket.status === "利用可能" && (
+                        {ticket.status === "active" && (
                           <>
                             <button
-                              onClick={() => handleShowQR(ticket.id)}
+                              onClick={() => handleShowQR(ticket)}
                               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium whitespace-nowrap cursor-pointer"
                             >
                               <i className="ri-qr-code-line mr-2"></i>
                               QRコード表示
                             </button>
                             <button
-                              onClick={() => handleDownloadTicket(ticket.id)}
+                              onClick={() => handleDownloadTicket(ticket)}
                               className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium whitespace-nowrap cursor-pointer"
                             >
                               <i className="ri-download-line mr-2"></i>
@@ -230,7 +257,7 @@ export default function MyTicketsPage() {
                         )}
 
                         <Link
-                          href={`/events/${ticket.id}`}
+                          href={`/events/${ticket.eventId}`}
                           className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium whitespace-nowrap cursor-pointer"
                         >
                           <i className="ri-information-line mr-2"></i>
@@ -288,6 +315,15 @@ export default function MyTicketsPage() {
       </main>
 
       <Footer />
+      
+      {/* QRコードモーダル */}
+      {selectedTicket && (
+        <QRCodeModal
+          ticket={selectedTicket}
+          isOpen={isQRModalOpen}
+          onClose={handleCloseQRModal}
+        />
+      )}
     </div>
   );
 }

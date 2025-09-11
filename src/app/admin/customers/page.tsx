@@ -3,89 +3,56 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-
-interface Customer {
-  id: number;
-  name: string;
-  email: string;
-  registeredAt: string;
-  totalPurchases: number;
-  totalSpent: number;
-  lastLogin: string;
-  status: 'active' | 'inactive';
-  purchases?: Array<{
-    id: number;
-    event: string;
-    date: string;
-    amount: number;
-    tickets: number;
-  }>;
-}
+import { useCustomers, useOrders } from '@/hooks';
+import type { Profile } from '@/types/database';
 
 export default function CustomerManagement() {
-  const [customers] = useState<Customer[]>([
-    {
-      id: 1,
-      name: '田中太郎',
-      email: 'tanaka@example.com',
-      registeredAt: '2024-01-15',
-      totalPurchases: 5,
-      totalSpent: 45000,
-      lastLogin: '2024-03-15',
-      status: 'active' as const
-    },
-    {
-      id: 2,
-      name: '佐藤花子',
-      email: 'sato@example.com',
-      registeredAt: '2024-02-20',
-      totalPurchases: 2,
-      totalSpent: 12000,
-      lastLogin: '2024-03-10',
-      status: 'active' as const
-    },
-    {
-      id: 3,
-      name: '山田次郎',
-      email: 'yamada@example.com',
-      registeredAt: '2024-01-10',
-      totalPurchases: 8,
-      totalSpent: 78000,
-      lastLogin: '2024-03-12',
-      status: 'active' as const
-    },
-    {
-      id: 4,
-      name: '鈴木三郎',
-      email: 'suzuki@example.com',
-      registeredAt: '2024-03-01',
-      totalPurchases: 1,
-      totalSpent: 3000,
-      lastLogin: '2024-03-01',
-      status: 'inactive' as const
-    }
-  ]);
+  const { customers, loading, error } = useCustomers();
+  const { orders } = useOrders(); // 全注文データを取得
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<Profile | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
 
   const filteredCustomers = customers.filter(customer =>
-    customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    customer.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     customer.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const showCustomerDetail = (customer: Customer) => {
-    setSelectedCustomer({
-      ...customer,
-      purchases: [
-        { id: 1, event: '春のコンサート2024', date: '2024-03-01', amount: 8000, tickets: 1 },
-        { id: 2, event: '夏祭り2024', date: '2024-02-15', amount: 6000, tickets: 2 },
-        { id: 3, event: 'ビジネスセミナー', date: '2024-01-20', amount: 5000, tickets: 1 }
-      ]
-    });
+  // 顧客ごとの購入統計を計算
+  const getCustomerStats = (customerId: string) => {
+    const customerOrders = orders.filter(order => order.user_id === customerId && order.status === 'paid');
+    const totalPurchases = customerOrders.length;
+    const totalSpent = customerOrders.reduce((sum, order) => sum + order.total_amount, 0);
+    
+    return { totalPurchases, totalSpent };
+  };
+
+  const showCustomerDetail = (customer: Profile) => {
+    setSelectedCustomer(customer);
     setShowDetailModal(true);
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">読み込み中...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600">エラーが発生しました: {error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -126,9 +93,9 @@ export default function CustomerManagement() {
                 <i className="ri-user-star-line text-green-600 text-xl w-6 h-6 flex items-center justify-center"></i>
               </div>
               <div className="ml-4">
-                <p className="text-sm text-gray-600">アクティブ顧客</p>
+                <p className="text-sm text-gray-600">メンバー顧客</p>
                 <p className="text-2xl font-semibold text-gray-900">
-                  {customers.filter(c => c.status === 'active').length}
+                  {customers.filter(c => !c.is_guest).length}
                 </p>
               </div>
             </div>
@@ -142,7 +109,10 @@ export default function CustomerManagement() {
               <div className="ml-4">
                 <p className="text-sm text-gray-600">平均購入回数</p>
                 <p className="text-2xl font-semibold text-gray-900">
-                  {(customers.reduce((sum, c) => sum + c.totalPurchases, 0) / customers.length).toFixed(1)}
+                  {customers.length > 0 
+                    ? (customers.reduce((sum, c) => sum + getCustomerStats(c.id).totalPurchases, 0) / customers.length).toFixed(1)
+                    : '0'
+                  }
                 </p>
               </div>
             </div>
@@ -156,7 +126,10 @@ export default function CustomerManagement() {
               <div className="ml-4">
                 <p className="text-sm text-gray-600">平均購入額</p>
                 <p className="text-2xl font-semibold text-gray-900">
-                  ¥{Math.round(customers.reduce((sum, c) => sum + c.totalSpent, 0) / customers.length).toLocaleString()}
+                  ¥{customers.length > 0 
+                    ? Math.round(customers.reduce((sum, c) => sum + getCustomerStats(c.id).totalSpent, 0) / customers.length).toLocaleString()
+                    : '0'
+                  }
                 </p>
               </div>
             </div>
@@ -212,45 +185,54 @@ export default function CustomerManagement() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredCustomers.map((customer) => (
-                  <tr key={customer.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">{customer.name}</div>
-                        <div className="text-sm text-gray-500">{customer.email}</div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{customer.registeredAt}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{customer.totalPurchases}回</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">¥{customer.totalSpent.toLocaleString()}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{customer.lastLogin}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        customer.status === 'active' 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-gray-100 text-gray-800'
-                      }`}>
-                        {customer.status === 'active' ? 'アクティブ' : '非アクティブ'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <button
-                        onClick={() => showCustomerDetail(customer)}
-                        className="text-blue-600 hover:text-blue-900"
-                      >
-                        詳細
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {filteredCustomers.map((customer) => {
+                  const stats = getCustomerStats(customer.id);
+                  return (
+                    <tr key={customer.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">
+                            {customer.full_name || '名前未設定'}
+                          </div>
+                          <div className="text-sm text-gray-500">{customer.email}</div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {new Date(customer.created_at).toLocaleDateString('ja-JP')}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{stats.totalPurchases}回</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">¥{stats.totalSpent.toLocaleString()}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {new Date(customer.updated_at).toLocaleDateString('ja-JP')}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          !customer.is_guest 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-orange-100 text-orange-800'
+                        }`}>
+                          {!customer.is_guest ? 'メンバー' : 'ゲスト'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button
+                          onClick={() => showCustomerDetail(customer)}
+                          className="text-blue-600 hover:text-blue-900"
+                        >
+                          詳細
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -276,7 +258,7 @@ export default function CustomerManagement() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-gray-600">氏名</p>
-                  <p className="font-medium text-gray-900">{selectedCustomer.name}</p>
+                  <p className="font-medium text-gray-900">{selectedCustomer.full_name || '名前未設定'}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">メールアドレス</p>
@@ -284,19 +266,42 @@ export default function CustomerManagement() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">登録日</p>
-                  <p className="font-medium text-gray-900">{selectedCustomer.registeredAt}</p>
+                  <p className="font-medium text-gray-900">
+                    {new Date(selectedCustomer.created_at).toLocaleDateString('ja-JP')}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">最終ログイン</p>
-                  <p className="font-medium text-gray-900">{selectedCustomer.lastLogin}</p>
+                  <p className="text-sm text-gray-600">最終更新</p>
+                  <p className="font-medium text-gray-900">
+                    {new Date(selectedCustomer.updated_at).toLocaleDateString('ja-JP')}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">購入回数</p>
-                  <p className="font-medium text-gray-900">{selectedCustomer.totalPurchases}回</p>
+                  <p className="text-sm text-gray-600">権限</p>
+                  <p className="font-medium text-gray-900">{selectedCustomer.role}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">累計購入額</p>
-                  <p className="font-medium text-gray-900">¥{selectedCustomer.totalSpent.toLocaleString()}</p>
+                  <p className="text-sm text-gray-600">アカウント種別</p>
+                  <p className="font-medium text-gray-900">
+                    {selectedCustomer.is_guest ? 'ゲスト' : 'メンバー'}
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            {/* 購入統計 */}
+            <div className="mb-6">
+              <h4 className="text-md font-semibold text-gray-900 mb-4">購入統計</h4>
+              <div className="bg-gray-50 rounded-lg p-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600">購入回数</p>
+                    <p className="font-medium text-gray-900">{getCustomerStats(selectedCustomer.id).totalPurchases}回</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">累計購入額</p>
+                    <p className="font-medium text-gray-900">¥{getCustomerStats(selectedCustomer.id).totalSpent.toLocaleString()}</p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -305,20 +310,32 @@ export default function CustomerManagement() {
             <div>
               <h4 className="text-md font-semibold text-gray-900 mb-4">購入履歴</h4>
               <div className="space-y-3">
-                {selectedCustomer.purchases?.map((purchase) => (
-                  <div key={purchase.id} className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h5 className="font-medium text-gray-900">{purchase.event}</h5>
-                        <p className="text-sm text-gray-600">購入日: {purchase.date}</p>
-                        <p className="text-sm text-gray-600">チケット数: {purchase.tickets}枚</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-semibold text-gray-900">¥{purchase.amount.toLocaleString()}</p>
+                {orders
+                  .filter(order => order.user_id === selectedCustomer.id && order.status === 'paid')
+                  .slice(0, 5) // 最新5件
+                  .map((order) => (
+                    <div key={order.id} className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h5 className="font-medium text-gray-900">注文 #{order.id.slice(-8)}</h5>
+                          <p className="text-sm text-gray-600">
+                            購入日: {new Date(order.created_at).toLocaleDateString('ja-JP')}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            アイテム数: {order.order_items?.length || 0}件
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold text-gray-900">¥{order.total_amount.toLocaleString()}</p>
+                          <p className="text-sm text-gray-600">{order.payment_method}</p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                }
+                {orders.filter(order => order.user_id === selectedCustomer.id && order.status === 'paid').length === 0 && (
+                  <p className="text-gray-500 text-center py-4">購入履歴がありません</p>
+                )}
               </div>
             </div>
           </div>

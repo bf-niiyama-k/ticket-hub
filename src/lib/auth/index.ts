@@ -188,3 +188,31 @@ export function onAuthStateChange(callback: (user: User | null) => void) {
 
   return () => subscription.unsubscribe();
 }
+
+// useAuth フック (管理画面で使用)
+import { useState, useEffect } from 'react';
+
+export function useAuth() {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<AuthError | null>(null);
+
+  useEffect(() => {
+    // 初期ユーザー取得
+    getCurrentUser().then(({ user, error }) => {
+      setUser(user);
+      setError(error);
+      setLoading(false);
+    });
+
+    // 認証状態の監視
+    const unsubscribe = onAuthStateChange((user) => {
+      setUser(user);
+      setLoading(false);
+    });
+
+    return unsubscribe;
+  }, []);
+
+  return { user, loading, error };
+}

@@ -3,31 +3,33 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import QRCodeScanner from '../../../components/ticket/QRCodeScanner';
+import { TicketScanResult } from '../../../types/ticket';
 
-interface Ticket {
-  ticketId: string;
-  customerName: string;
-  customerEmail: string;
-  eventTitle: string;
-  ticketType: string;
-  quantity: number;
-  eventDate: string;
-  eventTime: string;
-  venue: string;
-  isUsed: boolean;
-  purchaseDate: string;
-}
+// interface Ticket {
+//   ticketId: string;
+//   customerName: string;
+//   customerEmail: string;
+//   eventTitle: string;
+//   ticketType: string;
+//   quantity: number;
+//   eventDate: string;
+//   eventTime: string;
+//   venue: string;
+//   isUsed: boolean;
+//   purchaseDate: string;
+// }
 
-interface ScanResult {
-  ticketId?: string;
-  customerName?: string;
-  eventTitle?: string;
-  scanTime?: string;
-  status: 'valid' | 'invalid' | 'used' | 'confirmed';
-  message?: string;
-  timestamp?: string;
-  ticket?: Ticket;
-}
+// interface ScanResult {
+//   ticketId?: string;
+//   customerName?: string;
+//   eventTitle?: string;
+//   scanTime?: string;
+//   status: 'valid' | 'invalid' | 'used' | 'confirmed';
+//   message?: string;
+//   timestamp?: string;
+//   ticket?: Ticket;
+// }
 
 interface ScanHistoryItem {
   id: number;
@@ -39,144 +41,119 @@ interface ScanHistoryItem {
 }
 
 export default function QRScanner() {
-  const [scanResult, setScanResult] = useState<ScanResult | null>(null);
+  const [scanResult, setScanResult] = useState<TicketScanResult | null>(null);
   const [scanHistory, setScanHistory] = useState<ScanHistoryItem[]>([
-    {id: 1, ticketId: 'QR-123456', customerName: '田中太郎', eventTitle: '春のコンサート2024', scanTime: '2024-03-15 19:30', status: 'valid'},
-    {id: 2, ticketId: 'QR-123457', customerName: '佐藤花子', eventTitle: '夏祭り2024', scanTime: '2024-03-15 18:45', status: 'valid'},
-    {id: 3, ticketId: 'QR-123458', customerName: '山田次郎', eventTitle: 'ビジネスセミナー', scanTime: '2024-03-15 10:15', status: 'used'}
+    {id: 1, ticketId: 'ticket-001', customerName: '田中太郎', eventTitle: '春のコンサート2024', scanTime: '2024-03-15 19:30', status: 'valid'},
+    {id: 2, ticketId: 'ticket-002', customerName: '佐藤花子', eventTitle: '夏祭り2024', scanTime: '2024-03-15 18:45', status: 'valid'},
+    {id: 3, ticketId: 'ticket-003', customerName: '山田次郎', eventTitle: 'ビジネスセミナー', scanTime: '2024-03-15 10:15', status: 'used'}
   ]);
-  const [manualInput, setManualInput] = useState('');
-  const [isScanning, setIsScanning] = useState(false);
+  const [isConfirming, setIsConfirming] = useState(false);
 
-  const mockTickets: Record<string, Ticket> = {
-    'QR-123456': {
-      ticketId: 'QR-123456',
-      customerName: '田中太郎',
-      customerEmail: 'tanaka@example.com',
-      eventTitle: '春のコンサート2024',
-      ticketType: 'VIPチケット',
-      quantity: 2,
-      eventDate: '2024-04-15',
-      eventTime: '19:00',
-      venue: 'メインホール',
-      isUsed: false,
-      purchaseDate: '2024-03-01'
-    },
-    'QR-123457': {
-      ticketId: 'QR-123457',
-      customerName: '佐藤花子',
-      customerEmail: 'sato@example.com',
-      eventTitle: '夏祭り2024',
-      ticketType: '一般チケット',
-      quantity: 1,
-      eventDate: '2024-07-15',
-      eventTime: '18:00',
-      venue: '野外ステージ',
-      isUsed: false,
-      purchaseDate: '2024-02-15'
-    },
-    'QR-123458': {
-      ticketId: 'QR-123458',
-      customerName: '山田次郎',
-      customerEmail: 'yamada@example.com',
-      eventTitle: 'ビジネスセミナー',
-      ticketType: '一般チケット',
-      quantity: 1,
-      eventDate: '2024-04-20',
-      eventTime: '10:00',
-      venue: '会議室A',
-      isUsed: true,
-      purchaseDate: '2024-01-20'
-    }
-  };
+  // const mockTickets: Record<string, Ticket> = {
+  //   'QR-123456': {
+  //     ticketId: 'QR-123456',
+  //     customerName: '田中太郎',
+  //     customerEmail: 'tanaka@example.com',
+  //     eventTitle: '春のコンサート2024',
+  //     ticketType: 'VIPチケット',
+  //     quantity: 2,
+  //     eventDate: '2024-04-15',
+  //     eventTime: '19:00',
+  //     venue: 'メインホール',
+  //     isUsed: false,
+  //     purchaseDate: '2024-03-01'
+  //   },
+  //   'QR-123457': {
+  //     ticketId: 'QR-123457',
+  //     customerName: '佐藤花子',
+  //     customerEmail: 'sato@example.com',
+  //     eventTitle: '夏祭り2024',
+  //     ticketType: '一般チケット',
+  //     quantity: 1,
+  //     eventDate: '2024-07-15',
+  //     eventTime: '18:00',
+  //     venue: '野外ステージ',
+  //     isUsed: false,
+  //     purchaseDate: '2024-02-15'
+  //   },
+  //   'QR-123458': {
+  //     ticketId: 'QR-123458',
+  //     customerName: '山田次郎',
+  //     customerEmail: 'yamada@example.com',
+  //     eventTitle: 'ビジネスセミナー',
+  //     ticketType: '一般チケット',
+  //     quantity: 1,
+  //     eventDate: '2024-04-20',
+  //     eventTime: '10:00',
+  //     venue: '会議室A',
+  //     isUsed: true,
+  //     purchaseDate: '2024-01-20'
+  //   }
+  // };
 
-  const handleScan = (qrCode: string) => {
-    const ticket = mockTickets[qrCode as keyof typeof mockTickets];
+  const handleScanSuccess = (result: TicketScanResult) => {
+    setScanResult(result);
     
-    if (!ticket) {
-      setScanResult({
-        status: 'invalid',
-        message: '無効なQRコードです',
-        timestamp: new Date().toLocaleString('ja-JP')
-      });
-      return;
-    }
-
-    if (ticket.isUsed) {
-      setScanResult({
-        status: 'used',
-        message: 'このチケットは既に使用済みです',
-        ticket,
-        timestamp: new Date().toLocaleString('ja-JP')
-      });
-      return;
-    }
-
-    setScanResult({
-      status: 'valid',
-      message: 'チケットが確認されました',
-      ticket,
-      timestamp: new Date().toLocaleString('ja-JP')
-    });
-  };
-
-  const handleManualScan = () => {
-    if (manualInput.trim()) {
-      handleScan(manualInput.trim());
-      setManualInput('');
+    if (result.success && result.ticket) {
+      // スキャン履歴に追加
+      const newScan = {
+        id: scanHistory.length + 1,
+        ticketId: result.ticket.id,
+        customerName: result.ticket.customerName,
+        eventTitle: result.ticket.eventTitle,
+        scanTime: new Date(result.scanTime).toLocaleString('ja-JP'),
+        status: 'valid' as const
+      };
+      
+      setScanHistory([newScan, ...scanHistory.slice(0, 9)]); // 最新10件のみ保持
     }
   };
 
   const markAsUsed = () => {
-    if (scanResult && scanResult.ticket) {
-      // 実際の実装では、ここでデータベースを更新
-      const newScan = {
-        id: scanHistory.length + 1,
-        ticketId: scanResult.ticket.ticketId,
-        customerName: scanResult.ticket.customerName,
-        eventTitle: scanResult.ticket.eventTitle,
-        scanTime: new Date().toLocaleString('ja-JP'),
-        status: 'valid' as const
-      };
+    if (scanResult && scanResult.ticket && scanResult.success) {
+      setIsConfirming(true);
       
-      setScanHistory([newScan, ...scanHistory]);
-      setScanResult({
-        ...scanResult,
-        status: 'confirmed',
-        message: 'チケットが使用済みとしてマークされました'
-      });
+      // 実際の実装では、ここでAPIを呼び出してチケットを使用済みにマーク
+      setTimeout(() => {
+        setScanResult({
+          ...scanResult,
+          status: 'used',
+          message: 'チケットが使用済みとしてマークされました'
+        });
+        setIsConfirming(false);
+      }, 1000);
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'valid':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'used':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'invalid':
-        return 'bg-red-100 text-red-800 border-red-200';
-      case 'confirmed':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
+  // const getStatusColor = (status: string) => {
+  //   switch (status) {
+  //     case 'valid':
+  //       return 'bg-green-100 text-green-800 border-green-200';
+  //     case 'used':
+  //       return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+  //     case 'invalid':
+  //       return 'bg-red-100 text-red-800 border-red-200';
+  //     case 'confirmed':
+  //       return 'bg-blue-100 text-blue-800 border-blue-200';
+  //     default:
+  //       return 'bg-gray-100 text-gray-800 border-gray-200';
+  //   }
+  // };
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'valid':
-        return '有効';
-      case 'used':
-        return '使用済み';
-      case 'invalid':
-        return '無効';
-      case 'confirmed':
-        return '確認済み';
-      default:
-        return '不明';
-    }
-  };
+  // const getStatusText = (status: string) => {
+  //   switch (status) {
+  //     case 'valid':
+  //       return '有効';
+  //     case 'used':
+  //       return '使用済み';
+  //     case 'invalid':
+  //       return '無効';
+  //     case 'confirmed':
+  //       return '確認済み';
+  //     default:
+  //       return '不明';
+  //   }
+  // };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -200,96 +177,10 @@ export default function QRScanner() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* スキャン部分 */}
           <div className="space-y-6">
-            {/* カメラスキャン */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">カメラでスキャン</h2>
-              
-              <div className="aspect-square bg-gray-100 rounded-lg mb-4 flex items-center justify-center">
-                {isScanning ? (
-                  <div className="text-center">
-                    <div className="w-48 h-48 border-2 border-dashed border-blue-400 rounded-lg flex items-center justify-center mb-4">
-                      <i className="ri-camera-line text-4xl text-blue-400"></i>
-                    </div>
-                    <p className="text-sm text-gray-600">QRコードをカメラに向けてください</p>
-                  </div>
-                ) : (
-                  <div className="text-center">
-                    <i className="ri-qr-scan-2-line text-6xl text-gray-400 mb-4"></i>
-                    <p className="text-gray-600 mb-4">カメラでQRコードをスキャンします</p>
-                    <button
-                      onClick={() => setIsScanning(true)}
-                      className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
-                    >
-                      スキャン開始
-                    </button>
-                  </div>
-                )}
-              </div>
-              
-              {isScanning && (
-                <div className="flex justify-center">
-                  <button
-                    onClick={() => setIsScanning(false)}
-                    className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors whitespace-nowrap"
-                  >
-                    スキャン停止
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* 手動入力 */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">手動入力</h2>
-              
-              <div className="flex space-x-3">
-                <input
-                  type="text"
-                  value={manualInput}
-                  onChange={(e) => setManualInput(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleManualScan()}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="QRコードを入力してください (例: QR-123456)"
-                />
-                <button
-                  onClick={handleManualScan}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
-                >
-                  確認
-                </button>
-              </div>
-              
-              {/* テスト用サンプルQRコード */}
-              <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-600 mb-2">テスト用QRコード:</p>
-                <div className="space-y-1">
-                  <button 
-                    onClick={() => setManualInput('QR-123456')}
-                    className="block text-sm text-blue-600 hover:text-blue-800"
-                  >
-                    QR-123456 (有効チケット)
-                  </button>
-                  <button 
-                    onClick={() => setManualInput('QR-123457')}
-                    className="block text-sm text-blue-600 hover:text-blue-800"
-                  >
-                    QR-123457 (有効チケット)
-                  </button>
-                  <button 
-                    onClick={() => setManualInput('QR-123458')}
-                    className="block text-sm text-blue-600 hover:text-blue-800"
-                  >
-                    QR-123458 (使用済みチケット)
-                  </button>
-                  <button 
-                    onClick={() => setManualInput('QR-invalid')}
-                    className="block text-sm text-blue-600 hover:text-blue-800"
-                  >
-                    QR-invalid (無効チケット)
-                  </button>
-                </div>
-              </div>
-            </div>
+            <QRCodeScanner 
+              onScanSuccess={handleScanSuccess}
+              onError={(error) => console.error('Scanner error:', error)}
+            />
           </div>
 
           {/* 結果表示部分 */}
@@ -299,16 +190,25 @@ export default function QRScanner() {
               <div className="bg-white rounded-lg shadow-sm p-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">スキャン結果</h2>
                 
-                <div className={`border-2 rounded-lg p-4 mb-4 ${getStatusColor(scanResult.status)}`}>
+                <div className={`border-2 rounded-lg p-4 mb-4 ${
+                  scanResult.success ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'
+                }`}>
                   <div className="flex items-center mb-2">
                     <i className={`text-xl mr-2 w-6 h-6 flex items-center justify-center ${
-                      scanResult.status === 'valid' || scanResult.status === 'confirmed' ? 'ri-check-line' :
-                      scanResult.status === 'used' ? 'ri-time-line' : 'ri-close-line'
+                      scanResult.success ? 'ri-check-line text-green-600' : 'ri-close-line text-red-600'
                     }`}></i>
-                    <span className="font-semibold">{getStatusText(scanResult.status)}</span>
+                    <span className="font-semibold text-sm">
+                      {scanResult.status === 'valid' ? '有効なチケット' :
+                       scanResult.status === 'used' ? '使用済みチケット' :
+                       scanResult.status === 'invalid' ? '無効なチケット' : 'その他'}
+                    </span>
                   </div>
-                  <p className="text-sm">{scanResult.message}</p>
-                  <p className="text-xs mt-2 opacity-75">{scanResult.timestamp}</p>
+                  <p className={`text-sm ${scanResult.success ? 'text-green-800' : 'text-red-800'}`}>
+                    {scanResult.message}
+                  </p>
+                  <p className="text-xs mt-2 opacity-75">
+                    スキャン時刻: {new Date(scanResult.scanTime).toLocaleString('ja-JP')}
+                  </p>
                 </div>
                 
                 {scanResult.ticket && (
@@ -317,7 +217,7 @@ export default function QRScanner() {
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
                         <span className="text-gray-600">チケットID:</span>
-                        <span className="font-medium">{scanResult.ticket.ticketId}</span>
+                        <span className="font-medium">{scanResult.ticket.id}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">お客様名:</span>
@@ -345,13 +245,28 @@ export default function QRScanner() {
                       </div>
                     </div>
                     
-                    {scanResult.status === 'valid' && (
+                    {scanResult.status === 'valid' && scanResult.success && (
                       <button
                         onClick={markAsUsed}
-                        className="w-full mt-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors whitespace-nowrap"
+                        disabled={isConfirming}
+                        className="w-full mt-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors whitespace-nowrap disabled:bg-gray-400"
                       >
-                        入場を許可する
+                        {isConfirming ? (
+                          <>
+                            <i className="ri-loader-4-line mr-2 animate-spin"></i>
+                            処理中...
+                          </>
+                        ) : (
+                          '入場を許可する'
+                        )}
                       </button>
+                    )}
+                    
+                    {scanResult.status === 'used' && (
+                      <div className="w-full mt-4 px-4 py-2 bg-gray-100 text-gray-600 rounded-lg text-center">
+                        <i className="ri-check-line mr-2"></i>
+                        入場済み
+                      </div>
                     )}
                   </div>
                 )}

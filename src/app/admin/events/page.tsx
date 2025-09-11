@@ -3,78 +3,93 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useEvents } from '@/hooks';
+import { useAuth } from '@/lib/auth';
+import type { EventFormData } from '@/types/database';
 
 export default function EventManagement() {
-  const [events, setEvents] = useState([
-    {
-      id: 1,
-      title: '春のコンサート2024',
-      date: '2024-04-15',
-      venue: 'メインホール',
-      status: 'published',
-      ticketsSold: 150,
-      totalTickets: 200,
-      revenue: 450000
-    },
-    {
-      id: 2,
-      title: 'ビジネスセミナー',
-      date: '2024-04-20',
-      venue: '会議室A',
-      status: 'draft',
-      ticketsSold: 0,
-      totalTickets: 50,
-      revenue: 0
-    },
-    {
-      id: 3,
-      title: '夏祭り2024',
-      date: '2024-07-15',
-      venue: '野外ステージ',
-      status: 'published',
-      ticketsSold: 320,
-      totalTickets: 500,
-      revenue: 960000
-    }
-  ]);
-
+  const { user } = useAuth();
+  const { events, loading, error, createEvent, toggleEventStatus, deleteEvent } = useEvents(false);
+  
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [newEvent, setNewEvent] = useState({
+  const [newEvent, setNewEvent] = useState<EventFormData>({
     title: '',
-    date: '',
-    venue: '',
     description: '',
-    status: 'draft'
+    location: '',
+    date_start: '',
+    date_end: '',
+    image_url: '',
+    max_capacity: undefined,
+    is_published: false
   });
 
-  const handleCreateEvent = () => {
-    if (newEvent.title && newEvent.date && newEvent.venue) {
-      const event = {
-        id: events.length + 1,
+  const handleCreateEvent = async () => {
+    if (!newEvent.title || !newEvent.date_start || !newEvent.location) {
+      alert('必須項目を入力してください');
+      return;
+    }
+
+    try {
+      await createEvent({
         ...newEvent,
-        ticketsSold: 0,
-        totalTickets: 0,
-        revenue: 0
-      };
-      setEvents([...events, event]);
-      setNewEvent({ title: '', date: '', venue: '', description: '', status: 'draft' });
+        image_url: newEvent.image_url || null,
+        max_capacity: newEvent.max_capacity || null,
+        created_by: user?.id || null
+      });
+      setNewEvent({
+        title: '',
+        description: '',
+        location: '',
+        date_start: '',
+        date_end: '',
+        image_url: '',
+        max_capacity: undefined,
+        is_published: false
+      });
       setShowCreateModal(false);
+    } catch {
+      alert('イベントの作成に失敗しました');
     }
   };
 
-  const toggleEventStatus = (id: number) => {
-    setEvents(events.map(event => 
-      event.id === id 
-        ? { ...event, status: event.status === 'published' ? 'draft' : 'published' }
-        : event
-    ));
+  const handleToggleStatus = async (id: string) => {
+    try {
+      await toggleEventStatus(id);
+    } catch {
+      alert('ステータスの変更に失敗しました');
+    }
   };
 
-  const deleteEvent = (id: number) => {
+  const handleDeleteEvent = async (id: string) => {
     if (confirm('このイベントを削除してもよろしいですか？')) {
-      setEvents(events.filter(event => event.id !== id));
+      try {
+        await deleteEvent(id);
+      } catch {
+        alert('イベントの削除に失敗しました');
+      }
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">読み込み中...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600">エラーが発生しました: {error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -134,56 +149,64 @@ export default function EventManagement() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {events.map((event) => (
-                  <tr key={event.id}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{event.title}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{event.date}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{event.venue}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        event.status === 'published' 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-gray-100 text-gray-800'
-                      }`}>
-                        {event.status === 'published' ? '公開中' : '下書き'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {event.ticketsSold} / {event.totalTickets}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">¥{event.revenue.toLocaleString()}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                      <Link
-                        href={`/admin/events/${event.id}`}
-                        className="text-blue-600 hover:text-blue-900"
-                      >
-                        編集
-                      </Link>
-                      <button
-                        onClick={() => toggleEventStatus(event.id)}
-                        className="text-green-600 hover:text-green-900"
-                      >
-                        {event.status === 'published' ? '非公開' : '公開'}
-                      </button>
-                      <button
-                        onClick={() => deleteEvent(event.id)}
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        削除
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {events.map((event) => {
+                  const totalTickets = event.ticket_types?.reduce((sum, tt) => sum + tt.quantity_total, 0) || 0;
+                  const soldTickets = event.ticket_types?.reduce((sum, tt) => sum + tt.quantity_sold, 0) || 0;
+                  const revenue = soldTickets * (event.ticket_types?.[0]?.price || 0); // 簡略計算
+                  
+                  return (
+                    <tr key={event.id}>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">{event.title}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {new Date(event.date_start).toLocaleDateString('ja-JP')}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{event.location}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          event.is_published 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-gray-100 text-gray-800'
+                        }`}>
+                          {event.is_published ? '公開中' : '下書き'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {soldTickets} / {totalTickets}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">¥{revenue.toLocaleString()}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                        <Link
+                          href={`/admin/events/${event.id}`}
+                          className="text-blue-600 hover:text-blue-900"
+                        >
+                          編集
+                        </Link>
+                        <button
+                          onClick={() => handleToggleStatus(event.id)}
+                          className="text-green-600 hover:text-green-900"
+                        >
+                          {event.is_published ? '非公開' : '公開'}
+                        </button>
+                        <button
+                          onClick={() => handleDeleteEvent(event.id)}
+                          className="text-red-600 hover:text-red-900"
+                        >
+                          削除
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -207,7 +230,7 @@ export default function EventManagement() {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  イベント名
+                  イベント名 *
                 </label>
                 <input
                   type="text"
@@ -215,31 +238,47 @@ export default function EventManagement() {
                   onChange={(e) => setNewEvent({...newEvent, title: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                   placeholder="イベント名を入力"
+                  required
                 />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    開始日時 *
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={newEvent.date_start}
+                    onChange={(e) => setNewEvent({...newEvent, date_start: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    終了日時
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={newEvent.date_end}
+                    onChange={(e) => setNewEvent({...newEvent, date_end: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  開催日
-                </label>
-                <input
-                  type="date"
-                  value={newEvent.date}
-                  onChange={(e) => setNewEvent({...newEvent, date: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  会場
+                  会場 *
                 </label>
                 <input
                   type="text"
-                  value={newEvent.venue}
-                  onChange={(e) => setNewEvent({...newEvent, venue: e.target.value})}
+                  value={newEvent.location}
+                  onChange={(e) => setNewEvent({...newEvent, location: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                   placeholder="会場を入力"
+                  required
                 />
               </div>
               
@@ -255,6 +294,46 @@ export default function EventManagement() {
                   placeholder="イベントの説明を入力"
                   maxLength={500}
                 />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    最大収容人数
+                  </label>
+                  <input
+                    type="number"
+                    value={newEvent.max_capacity || ''}
+                    onChange={(e) => setNewEvent({...newEvent, max_capacity: e.target.value ? parseInt(e.target.value) : undefined})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="人数"
+                    min="1"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    画像URL
+                  </label>
+                  <input
+                    type="url"
+                    value={newEvent.image_url || ''}
+                    onChange={(e) => setNewEvent({...newEvent, image_url: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="https://..."
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={newEvent.is_published}
+                    onChange={(e) => setNewEvent({...newEvent, is_published: e.target.checked})}
+                    className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                  />
+                  <span className="ml-2 text-sm text-gray-700">即座に公開する</span>
+                </label>
               </div>
             </div>
             

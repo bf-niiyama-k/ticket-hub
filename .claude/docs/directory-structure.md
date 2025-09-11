@@ -1,7 +1,7 @@
 
 # プロジェクト ディレクトリ構造
 
-最終更新: 2025年9月2日 (Supabase認証・データベース基盤セットアップ完了後)
+最終更新: 2025年9月11日 (QRコード・チケットシステム実装完了後)
 
 ## src/ ディレクトリ構造
 
@@ -23,10 +23,19 @@ src/
 │   │   ├── scanner/            # QRスキャナーページ
 │   │   │   └── page.tsx
 │   │   └── page.tsx            # 管理画面メイン (✅ AdminLayout適用済み)
+│   ├── api/                    # ✅ API Routes
+│   │   ├── payments/           # ✅ 決済API
+│   │   │   ├── create-payment-intent/
+│   │   │   │   └── route.ts    # 決済Intent作成API
+│   │   │   └── confirm-payment/
+│   │   │       └── route.ts    # 決済確認API
+│   │   └── tickets/            # ✅ チケットAPI (新規追加)
+│   │       └── verify/         # ✅ QRコード検証API
+│   │           └── route.ts    # チケット検証・使用済みマーク
 │   ├── auth/                   # ✅ 認証関連 (新規追加)
 │   │   └── callback/           # OAuth認証コールバック
 │   │       └── page.tsx
-│   ├── checkout/               # チェックアウトページ
+│   ├── checkout/               # ✅ チェックアウトページ (決済統合済み)
 │   │   └── page.tsx
 │   ├── events/                 # イベント関連
 │   │   ├── [id]/               # 個別イベント詳細
@@ -63,28 +72,44 @@ src/
 │   │   ├── textarea.tsx
 │   │   └── index.ts            # クリーンなエクスポート
 │   ├── shared/                 # 共通ビジネスコンポーネント
-│   │   ├── EventCard.tsx       # ✅ 新規作成
-│   │   ├── StatsCard.tsx       # ✅ 新規作成  
-│   │   ├── TicketCard.tsx      # ✅ 新規作成
+│   │   ├── EventCard.tsx       # ✅ イベント表示カード
+│   │   ├── StatsCard.tsx       # ✅ 統計表示カード  
+│   │   ├── TicketCard.tsx      # ✅ チケット表示カード (QRコード統合)
 │   │   └── index.ts            # 型定義含むエクスポート
 │   ├── layout/                 # レイアウトコンポーネント
-│   │   ├── AdminLayout.tsx     # ✅ 新規作成
-│   │   ├── Footer.tsx          # 既存
-│   │   ├── Header.tsx          # 既存
+│   │   ├── AdminLayout.tsx     # ✅ 管理画面レイアウト
+│   │   ├── Footer.tsx          # フッター
+│   │   ├── Header.tsx          # ヘッダー
 │   │   └── index.ts            # エクスポート
+│   ├── auth/                   # ✅ 認証コンポーネント (新規追加)
+│   │   ├── ForgotPasswordForm.tsx
+│   │   ├── LoginForm.tsx
+│   │   ├── RegisterForm.tsx
+│   │   └── index.ts
+│   ├── ticket/                 # ✅ QRコード・チケットコンポーネント (新規追加)
+│   │   ├── QRCodeDisplay.tsx   # ✅ QRコード表示
+│   │   ├── QRCodeModal.tsx     # ✅ QRコードモーダル
+│   │   └── QRCodeScanner.tsx   # ✅ QRコードスキャナー
 │   └── index.ts                # 全体統合エクスポート
 │
-├── hooks/                      # カスタムフック (今後追加予定)
+├── hooks/                      # ✅ カスタムフック
+│   └── usePayment.ts           # ✅ 決済処理フック (新規追加)
 ├── lib/                        # ライブラリ・ユーティリティ
-│   ├── auth/                   # ✅ 認証機能 (新規追加)
+│   ├── auth/                   # ✅ 認証機能
 │   │   └── index.ts            # 認証ユーティリティ関数
-│   ├── supabase/               # ✅ Supabase設定 (新規追加)
+│   ├── supabase/               # ✅ Supabase設定
 │   │   ├── client.ts           # クライアント設定
 │   │   ├── server.ts           # サーバーサイド設定
 │   │   ├── types.ts            # データベース型定義
 │   │   └── index.ts            # エクスポート統合
-│   └── utils.ts                # ✅ shadcn/ui cn()関数
-├── types/                      # 型定義 (今後追加予定)
+│   ├── qr-generator.ts         # ✅ QRコード生成・検証 (新規追加)
+│   ├── pdf-generator.ts        # ✅ PDF生成・QRコード統合 (新規追加)
+│   ├── stripe.ts               # ✅ Stripe設定・ユーティリティ
+│   ├── paypay.ts               # ✅ PayPay設定・API統合
+│   └── utils.ts                # ✅ shadcn/ui cn()関数・日付フォーマット
+├── types/                      # ✅ 型定義
+│   ├── payment.ts              # ✅ 決済関連型定義
+│   └── ticket.ts               # ✅ チケット・QR関連型定義 (新規追加)
 └── utils/                      # ヘルパー関数 (今後追加予定)
 ```
 
@@ -94,10 +119,12 @@ src/
 ticket-hub/
 ├── .claude/                    # Claude Code設定・ドキュメント
 │   ├── docs/                   # プロジェクト設計ドキュメント
-│   │   ├── auth-design.md      # ✅ 認証システム設計 (新規)
-│   │   ├── database-schema.md  # ✅ データベース設計 (新規)
+│   │   ├── auth-design.md      # ✅ 認証システム設計
+│   │   ├── database-schema.md  # ✅ データベース設計
 │   │   ├── directory-structure.md
-│   │   ├── supabase-setup-complete.md # ✅ セットアップ完了レポート (新規)
+│   │   ├── payment-implementation.md # ✅ 決済システム実装
+│   │   ├── qr-ticket-implementation.md # ✅ QRコード・チケットシステム実装 (新規)
+│   │   ├── supabase-setup-complete.md # ✅ セットアップ完了レポート
 │   │   └── ui-restructuring-guide.md
 │   └── tasks/                  # タスク管理
 ├── supabase/                   # ✅ Supabase設定 (新規追加)
@@ -108,25 +135,27 @@ ticket-hub/
 └── [既存の設定ファイル...]
 ```
 
-## 主要な変更点 (Supabase認証・データベース基盤セットアップ)
+## 主要な変更点 (QRコード・チケットシステム実装完了)
 
-### ✅ 新規追加（認証・データベース）
-- `src/lib/supabase/` - Supabaseクライアント設定 (4ファイル)
-- `src/lib/auth/` - 認証ユーティリティ関数
-- `src/app/auth/callback/` - OAuth認証コールバックページ
-- `supabase/migrations/` - データベースマイグレーションSQL (2ファイル)
-- `.env.example` - 環境変数設定テンプレート
-- `.claude/docs/` - 設計ドキュメント (3ファイル)
+### ✅ 新規追加（QRコード・チケットシステム）
+- `src/lib/qr-generator.ts` - QRコード生成・検証・セキュリティライブラリ
+- `src/lib/pdf-generator.ts` - PDF生成・QRコード統合ライブラリ
+- `src/components/ticket/` - QRコード関連コンポーネント (3ファイル)
+- `src/types/ticket.ts` - チケット・QR関連型定義
+- `src/app/api/tickets/verify/` - QRコード検証API
+- `.claude/docs/qr-ticket-implementation.md` - QRシステム実装ドキュメント
 
-### ✅ インストール済み
-- `@supabase/supabase-js` - Supabaseクライアント
-- `@supabase/ssr` - サーバーサイドレンダリング対応
+### ✅ インストール済み（追加ライブラリ）
+- `qrcode.react` - React用QRコード生成
+- `html5-qrcode` - ブラウザQRコードスキャン（モバイル対応）
+- `jspdf` - PDF生成
+- `qrcode` - QRコード画像生成（PDF用）
 
-### ⚠️ 今後対応予定
-- Supabase プロジェクトでのマイグレーション実行
-- Google OAuth プロバイダー設定
-- 認証UI コンポーネント実装
-- セッション管理ミドルウェア実装
+### ✅ 機能統合完了
+- マイチケットページ: QRコード表示・PDF出力機能統合
+- 管理画面スキャナー: html5-qrcodeベースの高精度スキャン機能
+- チケットカードコンポーネント: QRコード表示機能統合
+- セキュリティ: SHA256署名・時限トークン・偽造対策完備
 
 ## 従来の変更点 (UI再構造化)
 
