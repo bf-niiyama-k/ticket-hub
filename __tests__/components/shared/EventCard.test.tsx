@@ -5,13 +5,16 @@ import { EventCardData } from '@/components/shared/EventCard'
 // Mock Next.js Image component
 jest.mock('next/image', () => ({
   __esModule: true,
-  default: ({ src, alt, ...props }: any) => <img src={src} alt={alt} {...props} />,
+  default: ({ src, alt, ...props }: { src: string; alt: string; [key: string]: unknown }) => (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={src} alt={alt} {...props} />
+  ),
 }))
 
 // Mock Next.js Link component
 jest.mock('next/link', () => ({
   __esModule: true,
-  default: ({ children, href, ...props }: any) => (
+  default: ({ children, href, ...props }: { children: React.ReactNode; href: string; [key: string]: unknown }) => (
     <a href={href} {...props}>
       {children}
     </a>

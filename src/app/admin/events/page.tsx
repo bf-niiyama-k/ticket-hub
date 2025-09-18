@@ -19,7 +19,6 @@ export default function EventManagement() {
     date_start: '',
     date_end: '',
     image_url: '',
-    max_capacity: undefined,
     is_published: false
   });
 

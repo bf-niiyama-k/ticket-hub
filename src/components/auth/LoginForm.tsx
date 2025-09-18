@@ -47,7 +47,10 @@ export default function LoginForm({ redirectTo = '/' }: LoginFormProps) {
       }
 
       if (user) {
-        router.push(redirectTo)
+        // ログイン成功時、少し待ってからリダイレクト（認証状態の同期を待つ）
+        setTimeout(() => {
+          router.push(redirectTo)
+        }, 100)
       }
     } catch {
       setError('予期しないエラーが発生しました')
@@ -64,10 +67,11 @@ export default function LoginForm({ redirectTo = '/' }: LoginFormProps) {
       const { error: googleError } = await signInWithGoogle()
       if (googleError) {
         setError(googleError.message || 'Google認証に失敗しました')
+        setIsLoading(false)
       }
+      // Google認証の場合は自動的にリダイレクトされるのでローディング状態は維持
     } catch {
       setError('予期しないエラーが発生しました')
-    } finally {
       setIsLoading(false)
     }
   }
