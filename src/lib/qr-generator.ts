@@ -28,7 +28,7 @@ export interface TicketValidationData {
   };
 }
 
-const QR_SECRET = process.env.QR_SECRET || 'default-secret-key-change-in-production';
+const QR_SECRET = process.env['QR_SECRET'] || 'default-secret-key-change-in-production';
 
 /**
  * QRコードのセキュリティ署名を生成

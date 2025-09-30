@@ -13,9 +13,6 @@ interface QRCodeScannerProps {
   onError?: (error: string) => void;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const _onErrorExample = (error: string) => console.error(error);
-
 export default function QRCodeScanner({ onScanSuccess }: QRCodeScannerProps) {
   const [scanner, setScanner] = useState<Html5QrcodeScanner | null>(null);
   const [isScanning, setIsScanning] = useState(false);

@@ -6,7 +6,8 @@
       "Bash(npm run lint)",
       "Bash(npm run test)",
       "Bash(npx shadcn@latest add:*)",
-      "Read(*)"
+      "Read(*)",
+      "WebFetch(domain:supabase.com)"
     ],
     "deny": []
   },

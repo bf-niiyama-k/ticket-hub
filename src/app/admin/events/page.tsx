@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useEvents } from '@/hooks';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/hooks/useAuth';
 import type { EventFormData } from '@/types/database';
 
 export default function EventManagement() {
@@ -18,7 +18,6 @@ export default function EventManagement() {
     location: '',
     date_start: '',
     date_end: '',
-    image_url: '',
     is_published: false
   });
 
@@ -41,8 +40,6 @@ export default function EventManagement() {
         location: '',
         date_start: '',
         date_end: '',
-        image_url: '',
-        max_capacity: undefined,
         is_published: false
       });
       setShowCreateModal(false);
@@ -303,7 +300,16 @@ export default function EventManagement() {
                   <input
                     type="number"
                     value={newEvent.max_capacity || ''}
-                    onChange={(e) => setNewEvent({...newEvent, max_capacity: e.target.value ? parseInt(e.target.value) : undefined})}
+                    onChange={(e) => {
+                      const value = e.target.value ? parseInt(e.target.value) : undefined;
+                      const updated = {...newEvent};
+                      if (value !== undefined) {
+                        updated.max_capacity = value;
+                      } else {
+                        delete updated.max_capacity;
+                      }
+                      setNewEvent(updated);
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                     placeholder="人数"
                     min="1"

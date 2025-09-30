@@ -3,7 +3,7 @@
 import { useState, useEffect, useContext, createContext } from 'react'
 import { User } from '@supabase/supabase-js'
 import { Profile } from '@/lib/supabase/types'
-import { getCurrentUser, onAuthStateChange, getUserProfile } from '@/lib/auth'
+import { getCurrentUser, onAuthStateChange, getUserProfile, signOut as authSignOut } from '@/lib/auth'
 
 interface AuthContextType {
   user: User | null
@@ -24,7 +24,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const { user: currentUser } = await getCurrentUser()
       setUser(currentUser)
-      
+
       if (currentUser) {
         const { profile: userProfile } = await getUserProfile(currentUser.id)
         setProfile(userProfile)
@@ -42,8 +42,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const handleSignOut = async () => {
     try {
-      const { signOut } = await import('@/lib/auth')
-      await signOut()
+      await authSignOut()
       setUser(null)
       setProfile(null)
     } catch (error) {
@@ -52,29 +51,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
+    let isMounted = true
+
     // 初期認証状態を取得
-    refreshUser()
+    getCurrentUser().then(({ user: currentUser }) => {
+      if (!isMounted) return
+
+      setUser(currentUser)
+      setLoading(false)
+
+      if (currentUser) {
+        getUserProfile(currentUser.id).then(({ profile: userProfile }) => {
+          if (isMounted) setProfile(userProfile)
+        })
+      }
+    })
 
     // 認証状態の変更を監視
-    const unsubscribe = onAuthStateChange(async (user) => {
+    const unsubscribe = onAuthStateChange((user) => {
+      if (!isMounted) return
+
       setUser(user)
-      
+
       if (user) {
-        try {
-          const { profile: userProfile } = await getUserProfile(user.id)
-          setProfile(userProfile)
-        } catch (error) {
-          console.error('プロフィール取得エラー:', error)
-          setProfile(null)
-        }
+        getUserProfile(user.id).then(({ profile: userProfile }) => {
+          if (isMounted) setProfile(userProfile)
+        })
       } else {
         setProfile(null)
       }
-      
-      setLoading(false)
     })
 
-    return () => unsubscribe()
+    return () => {
+      isMounted = false
+      unsubscribe()
+    }
   }, [])
 
   const value: AuthContextType = {

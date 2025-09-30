@@ -17,10 +17,9 @@ export default function AdminDashboard() {
   const [isPremiumUser] = useState(false);
 
   return (
-    <AdminLayout 
-      title="管理画面" 
+    <AdminLayout
+      title="管理画面"
       isPremiumUser={isPremiumUser}
-      username="管理者: 田中太郎"
     >
         {/* 統計カード */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

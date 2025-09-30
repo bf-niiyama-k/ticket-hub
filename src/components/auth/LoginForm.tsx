@@ -7,8 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardHeader, CardContent } from '@/components/ui/card'
-import { signIn, signInWithGoogle } from '@/lib/auth'
-import { LoginFormData } from '@/types/auth'
+import { signIn } from '@/lib/auth'
 
 interface LoginFormProps {
   redirectTo?: string
@@ -16,19 +15,11 @@ interface LoginFormProps {
 
 export default function LoginForm({ redirectTo = '/' }: LoginFormProps) {
   const router = useRouter()
-  const [formData, setFormData] = useState<LoginFormData>({
-    email: '',
-    password: '',
-    rememberMe: false
-  })
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
-
-  const handleInputChange = (field: keyof LoginFormData, value: string | boolean) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
-    setError('')
-  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -36,42 +27,24 @@ export default function LoginForm({ redirectTo = '/' }: LoginFormProps) {
     setError('')
 
     try {
-      const { user, error: signInError } = await signIn({
-        email: formData.email,
-        password: formData.password
-      })
+      const { user, error: signInError } = await signIn({ email, password })
 
       if (signInError) {
-        setError(signInError.message || 'ログインに失敗しました')
+        setError('ログインに失敗しました。メールアドレスとパスワードを確認してください。')
+        setIsLoading(false)
         return
       }
 
       if (user) {
-        // ログイン成功時、少し待ってからリダイレクト（認証状態の同期を待つ）
-        setTimeout(() => {
-          router.push(redirectTo)
-        }, 100)
+        // middlewareでリダイレクト処理される
+        // 少し待ってからリダイレクト（認証状態の反映を待つ）
+        await new Promise(resolve => setTimeout(resolve, 500))
+        router.push(redirectTo)
       }
-    } catch {
+    } catch (err) {
+      console.error('ログインエラー:', err)
       setError('予期しないエラーが発生しました')
     } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleGoogleLogin = async () => {
-    setIsLoading(true)
-    setError('')
-
-    try {
-      const { error: googleError } = await signInWithGoogle()
-      if (googleError) {
-        setError(googleError.message || 'Google認証に失敗しました')
-        setIsLoading(false)
-      }
-      // Google認証の場合は自動的にリダイレクトされるのでローディング状態は維持
-    } catch {
-      setError('予期しないエラーが発生しました')
       setIsLoading(false)
     }
   }
@@ -101,8 +74,8 @@ export default function LoginForm({ redirectTo = '/' }: LoginFormProps) {
             <Input
               id="email"
               type="email"
-              value={formData.email}
-              onChange={(e) => handleInputChange('email', e.target.value)}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               placeholder="example@email.com"
               required
             />
@@ -114,8 +87,8 @@ export default function LoginForm({ redirectTo = '/' }: LoginFormProps) {
               <Input
                 id="password"
                 type={showPassword ? 'text' : 'password'}
-                value={formData.password}
-                onChange={(e) => handleInputChange('password', e.target.value)}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 placeholder="パスワードを入力"
                 className="pr-12"
                 required
@@ -130,19 +103,7 @@ export default function LoginForm({ redirectTo = '/' }: LoginFormProps) {
             </div>
           </div>
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="remember"
-                checked={formData.rememberMe}
-                onChange={(e) => handleInputChange('rememberMe', e.target.checked)}
-                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-              />
-              <Label htmlFor="remember" className="text-sm text-gray-600">
-                ログイン状態を保持
-              </Label>
-            </div>
+          <div className="flex items-center justify-end">
             <Link
               href="/forgot-password"
               className="text-sm text-blue-600 hover:text-blue-700"
@@ -162,30 +123,6 @@ export default function LoginForm({ redirectTo = '/' }: LoginFormProps) {
             )}
           </Button>
         </form>
-
-        <div className="mt-8">
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="bg-white px-4 text-gray-500">または</span>
-            </div>
-          </div>
-
-          <div className="mt-6">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleGoogleLogin}
-              disabled={isLoading}
-              className="w-full"
-            >
-              <i className="ri-google-fill text-red-500 mr-3"></i>
-              Googleでログイン
-            </Button>
-          </div>
-        </div>
 
         <div className="mt-8 text-center">
           <p className="text-gray-600">

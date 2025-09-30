@@ -1,3 +1,8 @@
+/**
+ * 認証関連のユーティリティ関数
+ * Supabase公式ドキュメントのベストプラクティスに従って実装
+ * @see https://supabase.com/docs/guides/auth/server-side/nextjs
+ */
 import { supabase } from "@/lib/supabase";
 import type { AuthError, User } from "@supabase/supabase-js";
 
@@ -72,7 +77,7 @@ export async function signInWithGoogle() {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || window.location.origin}/auth/callback`,
+      redirectTo: `${process.env['NEXT_PUBLIC_SITE_URL'] || window.location.origin}/auth/callback`,
       queryParams: {
         access_type: 'offline',
         prompt: 'consent',
@@ -186,37 +191,9 @@ export async function updateUserProfile(
 export function onAuthStateChange(callback: (user: User | null) => void) {
   const {
     data: { subscription },
-  } = supabase.auth.onAuthStateChange((event, session) => {
+  } = supabase.auth.onAuthStateChange((_event, session) => {
     callback(session?.user ?? null);
   });
 
   return () => subscription.unsubscribe();
-}
-
-// useAuth フック (管理画面で使用)
-import { useState, useEffect } from 'react';
-
-export function useAuth() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<AuthError | null>(null);
-
-  useEffect(() => {
-    // 初期ユーザー取得
-    getCurrentUser().then(({ user, error }) => {
-      setUser(user);
-      setError(error);
-      setLoading(false);
-    });
-
-    // 認証状態の監視
-    const unsubscribe = onAuthStateChange((user) => {
-      setUser(user);
-      setLoading(false);
-    });
-
-    return unsubscribe;
-  }, []);
-
-  return { user, loading, error };
 }

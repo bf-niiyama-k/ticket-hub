@@ -161,26 +161,30 @@ export async function generateMultipleTicketsPDF(tickets: Ticket[]): Promise<voi
     }
     
     const ticket = tickets[i];
-    
+
+    if (!ticket) {
+      continue;
+    }
+
     // 各チケットのPDF生成（簡略版）
     pdf.setFontSize(20);
     pdf.text(`チケット ${i + 1}/${tickets.length}`, 20, 20);
-    
+
     pdf.setFontSize(16);
     pdf.text(ticket.eventTitle, 20, 40);
-    
+
     pdf.setFontSize(12);
     pdf.text(`チケット種類: ${ticket.ticketType}`, 20, 55);
     pdf.text(`購入者: ${ticket.customerName}`, 20, 70);
     pdf.text(`開催日: ${formatDate(ticket.eventDate)}`, 20, 85);
     pdf.text(`会場: ${ticket.venue}`, 20, 100);
-    
+
     // QRコード生成を試行
     try {
       const qrData = generateQRData(ticket.id, ticket.eventId, ticket.userId);
       const qrCodeValue = encodeQRData(qrData);
       const qrCodeDataURL = await generateQRCodeDataURL(qrCodeValue, 80);
-      
+
       if (qrCodeDataURL) {
         pdf.addImage(qrCodeDataURL, 'PNG', 120, 40, 60, 60);
       }
@@ -189,6 +193,6 @@ export async function generateMultipleTicketsPDF(tickets: Ticket[]): Promise<voi
     }
   }
   
-  const fileName = `tickets-${tickets[0].eventTitle.replace(/[^a-zA-Z0-9]/g, '')}-${tickets.length}tickets.pdf`;
+  const fileName = `tickets-${tickets[0]?.eventTitle.replace(/[^a-zA-Z0-9]/g, '') || 'export'}-${tickets.length}tickets.pdf`;
   pdf.save(fileName);
 }

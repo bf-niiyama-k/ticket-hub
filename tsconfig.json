@@ -30,7 +30,7 @@
     "exactOptionalPropertyTypes": true,
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": true,
-    "noUncheckedSideEffectImports": true,
+    // "noUncheckedSideEffectImports": true, // CSSインポートのため無効化
     // 未使用変数・未使用インポートの検出
     "noUnusedLocals": true,
     "noUnusedParameters": true,

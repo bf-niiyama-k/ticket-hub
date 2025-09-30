@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
         eventTitle,
         customerEmail: customerInfo.email,
         orderItems,
-        redirectUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/purchase-complete?payment_method=paypay&order_id=${orderId}`,
+        redirectUrl: `${process.env['NEXT_PUBLIC_BASE_URL']}/purchase-complete?payment_method=paypay&order_id=${orderId}`,
       });
 
       if (result.success && result.data) {

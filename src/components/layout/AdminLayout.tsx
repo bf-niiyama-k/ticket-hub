@@ -1,8 +1,11 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/hooks/useAuth';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -10,7 +13,6 @@ interface AdminLayoutProps {
   backHref?: string;
   actions?: React.ReactNode;
   isPremiumUser?: boolean;
-  username?: string;
 }
 
 export default function AdminLayout({
@@ -18,9 +20,24 @@ export default function AdminLayout({
   title,
   backHref,
   actions,
-  isPremiumUser = false,
-  username = '管理者'
+  isPremiumUser = false
 }: AdminLayoutProps) {
+  const { user, profile, signOut } = useAuth();
+  const router = useRouter();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      router.push('/');
+    } catch (error) {
+      console.error('ログアウトエラー:', error);
+    }
+  };
+
+  // middlewareで認証チェック済みのため、ここでは何もチェックしない
+
+  const displayUsername = profile?.full_name || user?.email || '管理者';
+  const userIsPremium = profile?.role === 'admin' || isPremiumUser;
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm border-b">
@@ -39,8 +56,8 @@ export default function AdminLayout({
             </div>
             
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">{username}</span>
-              {!isPremiumUser ? (
+              <span className="text-sm text-gray-600">{displayUsername}</span>
+              {!userIsPremium ? (
                 <Badge variant="secondary" className="bg-orange-100 text-orange-800">
                   無料プラン
                 </Badge>
@@ -49,6 +66,15 @@ export default function AdminLayout({
                   プレミアム
                 </Badge>
               )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleSignOut}
+                className="text-gray-600 hover:text-gray-900"
+              >
+                <i className="ri-logout-line mr-2"></i>
+                ログアウト
+              </Button>
               
               {actions ? (
                 actions

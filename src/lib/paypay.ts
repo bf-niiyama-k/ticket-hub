@@ -33,10 +33,10 @@ interface PayPaySDKResponse {
 // PayPay設定の初期化
 export const initializePayPay = () => {
   PAYPAY.Configure({
-    clientId: process.env.PAYPAY_API_KEY!,
-    clientSecret: process.env.PAYPAY_API_SECRET!,
-    merchantId: process.env.PAYPAY_MERCHANT_ID!,
-    productionMode: process.env.NODE_ENV === "production",
+    clientId: process.env['PAYPAY_API_KEY']!,
+    clientSecret: process.env['PAYPAY_API_SECRET']!,
+    merchantId: process.env['PAYPAY_MERCHANT_ID']!,
+    productionMode: process.env['NODE_ENV'] === "production",
   });
 };
 
@@ -255,12 +255,16 @@ export const handlePayPayError = (error: unknown): PaymentError => {
           message: "決済の有効期限が切れています",
           code,
         };
-      default:
-        return {
+      default: {
+        const result: PaymentError = {
           type: "payment_failed",
           message: message || "PayPay決済でエラーが発生しました",
-          code,
         };
+        if (code !== undefined) {
+          result.code = code;
+        }
+        return result;
+      }
     }
   } else if (error instanceof Error) {
     // 一般的なエラーの場合

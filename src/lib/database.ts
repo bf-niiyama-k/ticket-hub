@@ -19,7 +19,7 @@ type OrderInsert = Database['public']['Tables']['orders']['Insert'];
 type OrderUpdate = Database['public']['Tables']['orders']['Update'];
 
 export class DatabaseError extends Error {
-  constructor(message: string, public cause?: Error) {
+  constructor(message: string, public override cause?: Error) {
     super(message);
     this.name = 'DatabaseError';
   }

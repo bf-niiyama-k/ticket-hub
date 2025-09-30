@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({
             success: true,
             status: "completed",
-            orderId: paymentIntent.metadata?.orderId || null,
+            orderId: paymentIntent.metadata?.['orderId'] || null,
           });
         } else if (paymentIntent.status === "requires_confirmation") {
           // 確認が必要な場合
@@ -137,7 +137,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({
               success: true,
               status: "completed",
-              orderId: confirmedPayment.metadata?.orderId || null,
+              orderId: confirmedPayment.metadata?.['orderId'] || null,
             });
           } else {
             return NextResponse.json({

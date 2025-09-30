@@ -2,7 +2,7 @@ import Stripe from "stripe";
 import { loadStripe } from "@stripe/stripe-js";
 
 // サーバーサイド用のStripe設定
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+export const stripe = new Stripe(process.env['STRIPE_SECRET_KEY']!, {
   apiVersion: "2025-08-27.basil",
   typescript: true,
 });
@@ -12,7 +12,7 @@ let stripePromise: Promise<import('@stripe/stripe-js').Stripe | null>;
 
 export const getStripe = () => {
   if (!stripePromise) {
-    stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+    stripePromise = loadStripe(process.env['NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY']!);
   }
   return stripePromise;
 };
@@ -71,7 +71,7 @@ export const createPaymentIntent = async (params: {
       paymentIntentParams.payment_method_types = ["konbini"];
       paymentIntentParams.payment_method_options = {
         konbini: {
-          product_description: metadata.eventTitle || "チケット購入",
+          product_description: metadata['eventTitle'] || "チケット購入",
           expires_after_days: 3, // 3日間有効
         },
       };
@@ -119,16 +119,21 @@ export const createOrRetrieveCustomer = async (params: {
     limit: 1,
   });
 
-  if (existingCustomers.data.length > 0) {
+  if (existingCustomers.data.length > 0 && existingCustomers.data[0]) {
     return existingCustomers.data[0];
   }
 
   // 新規顧客を作成
-  return await stripe.customers.create({
+  const customerData: Stripe.CustomerCreateParams = {
     email,
-    name,
-    phone,
-  });
+  };
+  if (name !== undefined) {
+    customerData.name = name;
+  }
+  if (phone !== undefined) {
+    customerData.phone = phone;
+  }
+  return await stripe.customers.create(customerData);
 };
 
 // Webhookの署名を検証
