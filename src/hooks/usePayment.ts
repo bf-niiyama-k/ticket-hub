@@ -111,7 +111,17 @@ export const usePayment = (): UsePaymentReturn => {
   );
 
   const confirmPayment = useCallback(
-    async (paymentIntentId: string): Promise<PaymentResult> => {
+    async (
+      paymentIntentId: string,
+      options?: {
+        userId?: string;
+        guestInfo?: {
+          name: string;
+          email: string;
+          phone: string;
+        };
+      }
+    ): Promise<PaymentResult> => {
       setIsProcessing(true);
       setError(null);
 
@@ -132,8 +142,8 @@ export const usePayment = (): UsePaymentReturn => {
             paymentIntentId,
             orderId: paymentIntent.orderId,
           };
-        } else if (paymentIntent.paymentMethod === "credit") {
-          // クレジットカード決済の場合はStripeで処理
+        } else if (paymentIntent.paymentMethod === "credit" || paymentIntent.paymentMethod === "convenience") {
+          // クレジットカード・コンビニ決済の場合はStripeで処理
           const stripe = await getStripe();
           if (!stripe) {
             const stripeError: PaymentError = {
@@ -144,8 +154,7 @@ export const usePayment = (): UsePaymentReturn => {
             return { success: false, error: stripeError };
           }
 
-          // Stripe Elementsを使用する場合は、ここでconfirmPaymentを呼び出す
-          // 現在は簡易的にAPIで確認
+          // APIで決済確認と注文作成
           const response = await fetch("/api/payments/confirm-payment", {
             method: "POST",
             headers: {
@@ -155,33 +164,8 @@ export const usePayment = (): UsePaymentReturn => {
               paymentIntentId,
               paymentMethod: paymentIntent.paymentMethod,
               orderId: paymentIntent.orderId,
-            }),
-          });
-
-          const result = await response.json();
-
-          if (result.success) {
-            setPaymentIntent({ ...paymentIntent, status: "succeeded" });
-            return {
-              success: true,
-              paymentIntentId,
-              orderId: result.orderId,
-            };
-          } else {
-            setError(result.error);
-            return { success: false, error: result.error };
-          }
-        } else if (paymentIntent.paymentMethod === "convenience") {
-          // コンビニ決済の場合
-          const response = await fetch("/api/payments/confirm-payment", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              paymentIntentId,
-              paymentMethod: paymentIntent.paymentMethod,
-              orderId: paymentIntent.orderId,
+              userId: options?.userId,
+              guestInfo: options?.guestInfo,
             }),
           });
 

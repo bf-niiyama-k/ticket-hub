@@ -1,11 +1,14 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, Suspense, useCallback } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import Header from "../../components/layout/Header";
 import Footer from "../../components/layout/Footer";
+import { LoadingScreen } from "../../components/shared/LoadingScreen";
+import { ErrorScreen } from "../../components/shared/ErrorScreen";
 import { usePayment } from "../../hooks/usePayment";
+import { useEvent } from "../../hooks/useEvents";
 import type { PaymentMethod, OrderItem } from "../../types/payment";
 
 function CheckoutContent() {
@@ -14,7 +17,17 @@ function CheckoutContent() {
   const [step, setStep] = useState(1);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>("credit");
-  
+  const [stockError, setStockError] = useState<string | null>(null);
+
+  const eventId = searchParams.get("event");
+  const ticketsParam = searchParams.get("tickets");
+  const selectedTickets = ticketsParam
+    ? JSON.parse(decodeURIComponent(ticketsParam))
+    : {};
+
+  // イベント情報をDBから取得
+  const { event, loading: eventLoading, error: eventError, refetch } = useEvent(eventId || '');
+
   // 決済フックを使用
   const {
     isProcessing,
@@ -23,6 +36,7 @@ function CheckoutContent() {
     confirmPayment,
     clearError,
   } = usePayment();
+
   const [formData, setFormData] = useState({
     email: "",
     firstName: "",
@@ -34,40 +48,25 @@ function CheckoutContent() {
     cardName: "",
   });
 
-  const eventId = searchParams.get("event");
-  const ticketsParam = searchParams.get("tickets");
-  const selectedTickets = ticketsParam
-    ? JSON.parse(decodeURIComponent(ticketsParam))
-    : {};
+  const tickets = event?.ticket_types || [];
 
-  const events = {
-    "1": {
-      title: "東京国際展示会2024",
-      date: "2024年3月15日",
-      venue: "東京ビッグサイト",
-    },
-    "2": {
-      title: "ホテル春の特別ディナー",
-      date: "2024年3月20日",
-      venue: "グランドホテル東京",
-    },
-  };
+  // チケット在庫確認関数
+  const validateTicketAvailability = useCallback(async () => {
+    setStockError(null);
 
-  const ticketTypes = {
-    "1": [
-      { id: "general", name: "一般入場券", price: 3500 },
-      { id: "vip", name: "VIPパス", price: 8500 },
-      { id: "business", name: "ビジネスパス", price: 12000 },
-    ],
-    "2": [
-      { id: "dinner", name: "特別ディナーコース", price: 12000 },
-      { id: "wine", name: "ワインペアリングコース", price: 18000 },
-      { id: "premium", name: "プレミアムコース", price: 25000 },
-    ],
-  };
+    for (const [ticketId, count] of Object.entries(selectedTickets)) {
+      const ticket = tickets.find(t => t.id === ticketId);
+      if (!ticket) continue;
 
-  const event = events[eventId as keyof typeof events];
-  const tickets = ticketTypes[eventId as keyof typeof ticketTypes] || [];
+      const availableStock = ticket.quantity_total - ticket.quantity_sold;
+      if (availableStock < (count as number)) {
+        const errorMsg = `${ticket.name}の在庫が不足しています（残り${availableStock}枚）`;
+        setStockError(errorMsg);
+        return false;
+      }
+    }
+    return true;
+  }, [selectedTickets, tickets]);
 
   const getTotalPrice = () => {
     return Object.entries(selectedTickets).reduce(
@@ -107,6 +106,12 @@ function CheckoutContent() {
 
     if (selectedPaymentMethod === "credit" && (!formData.cardNumber || !formData.expiryDate || !formData.cvv || !formData.cardName)) {
       alert("クレジットカード情報を正しく入力してください");
+      return;
+    }
+
+    // 在庫確認
+    const isAvailable = await validateTicketAvailability();
+    if (!isAvailable) {
       return;
     }
 
@@ -151,7 +156,16 @@ function CheckoutContent() {
           router.push(`/purchase-complete?payment_intent=${result.paymentIntentId}&order_id=${result.orderId}&payment_method=convenience`);
         } else {
           // クレジットカード決済の場合は決済確認
-          const confirmResult = await confirmPayment(result.paymentIntentId!);
+          const confirmOptions = isLoggedIn
+            ? {} // TODO: 認証機能実装後にuserIdを設定
+            : {
+                guestInfo: {
+                  name: `${formData.lastName} ${formData.firstName}`,
+                  email: formData.email,
+                  phone: formData.phone,
+                }
+              };
+          const confirmResult = await confirmPayment(result.paymentIntentId!, confirmOptions);
           if (confirmResult.success) {
             router.push(`/purchase-complete?payment_intent=${result.paymentIntentId}&order_id=${confirmResult.orderId}&payment_method=credit`);
           }
@@ -163,19 +177,14 @@ function CheckoutContent() {
     }
   };
 
-  if (!event) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">
-            イベント情報が見つかりません
-          </h1>
-          <Link href="/events" className="text-blue-600 hover:text-blue-700">
-            イベント一覧に戻る
-          </Link>
-        </div>
-      </div>
-    );
+  // ローディング表示
+  if (eventLoading) {
+    return <LoadingScreen />;
+  }
+
+  // エラー表示
+  if (eventError || !event) {
+    return <ErrorScreen message={eventError || "イベント情報が見つかりません"} onRetry={refetch} />;
   }
 
   return (
@@ -202,19 +211,22 @@ function CheckoutContent() {
         </div>
 
         {/* エラー表示 */}
-        {paymentError && (
+        {(paymentError || stockError) && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-8">
             <div className="flex items-start">
               <i className="ri-error-warning-line text-red-600 mr-3 mt-1"></i>
               <div className="text-sm text-red-800">
                 <p className="font-semibold mb-1">エラーが発生しました</p>
-                <p>{paymentError.message}</p>
-                {paymentError.code && (
+                <p>{stockError || paymentError?.message}</p>
+                {paymentError?.code && (
                   <p className="text-xs mt-1 text-red-600">エラーコード: {paymentError.code}</p>
                 )}
               </div>
               <button
-                onClick={clearError}
+                onClick={() => {
+                  clearError();
+                  setStockError(null);
+                }}
                 className="ml-auto text-red-600 hover:text-red-700"
               >
                 <i className="ri-close-line"></i>
@@ -593,8 +605,8 @@ function CheckoutContent() {
                 <h4 className="font-semibold text-gray-900 mb-2">
                   {event.title}
                 </h4>
-                <p className="text-sm text-gray-600">{event.date}</p>
-                <p className="text-sm text-gray-600">{event.venue}</p>
+                <p className="text-sm text-gray-600">{new Date(event.date_start).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                <p className="text-sm text-gray-600">{event.location}</p>
               </div>
 
               <div className="space-y-3 mb-6">

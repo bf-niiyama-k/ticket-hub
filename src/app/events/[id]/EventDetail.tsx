@@ -5,133 +5,30 @@ import Link from "next/link";
 import Image from "next/image";
 import Header from "../../../components/layout/Header";
 import Footer from "../../../components/layout/Footer";
+import { useEvent } from "@/hooks";
+import { LoadingScreen, ErrorScreen } from "@/components";
 
 interface EventDetailProps {
   eventId: string;
 }
 
 export default function EventDetail({ eventId }: EventDetailProps) {
+  const { event, loading, error } = useEvent(eventId);
   const [selectedTickets, setSelectedTickets] = useState<{
     [key: string]: number;
   }>({});
 
-  const events = {
-    "1": {
-      id: 1,
-      title: "東京国際展示会2024",
-      description:
-        "最新テクノロジーが集結する国際展示会。AI、IoT、ロボティクスなど最先端技術を体験できます。世界各国から集まった企業が最新の製品・サービスを展示し、ビジネスマッチングの機会も豊富です。",
-      fullDescription:
-        "この展示会では、次世代のテクノロジーを直接体験することができます。各企業のブースでは実際に製品を手に取って確認でき、専門スタッフからの詳しい説明も受けられます。また、併設されるセミナーでは業界の最新動向について学ぶことができます。",
-      date: "2024年3月15日",
-      time: "10:00 - 18:00",
-      venue: "東京ビッグサイト",
-      venueAddress: "東京都江東区有明3-11-1",
-      category: "exhibition",
-      status: "販売中",
-      image:
-        "/img/event.jpg",
-      organizer: "日本テクノロジー協会",
-      contact: "info@techexpo2024.jp",
-    },
-    "2": {
-      id: 2,
-      title: "ホテル春の特別ディナー",
-      description:
-        "有名シェフによる季節限定の特別コースディナー。厳選された食材を使用した絶品料理をお楽しみください。",
-      fullDescription:
-        "春の食材を贅沢に使用した特別コースディナーをご提供いたします。ミシュラン星付きレストランで経験を積んだシェフが、季節の味覚を最大限に活かした料理をお作りします。ワインペアリングもご用意しており、料理との絶妙なマリアージュをお楽しみいただけます。",
-      date: "2024年3月20日",
-      time: "19:00 - 22:00",
-      venue: "グランドホテル東京",
-      venueAddress: "東京都千代田区丸の内1-1-1",
-      category: "dinner",
-      status: "販売中",
-      image:
-        "/img/event.jpg",
-      organizer: "グランドホテル東京",
-      contact: "dining@grandhotel-tokyo.com",
-    },
-  };
-
-  const ticketTypes = {
-    "1": [
-      {
-        id: "general",
-        name: "一般入場券",
-        price: 3500,
-        description: "展示会への入場券。すべての展示ブースをご覧いただけます。",
-        benefits: [
-          "全展示ブース見学可能",
-          "パンフレット配布",
-          "無料WiFi利用可能",
-        ],
-      },
-      {
-        id: "vip",
-        name: "VIPパス",
-        price: 8500,
-        description: "VIP専用エリアへのアクセスと特別セミナー参加権付き。",
-        benefits: [
-          "VIP専用エリアアクセス",
-          "特別セミナー参加可能",
-          "専用休憩スペース利用可能",
-          "ドリンク・軽食無料",
-        ],
-      },
-      {
-        id: "business",
-        name: "ビジネスパス",
-        price: 12000,
-        description: "ビジネスマッチング会への参加権とネットワーキング機会。",
-        benefits: [
-          "ビジネスマッチング会参加",
-          "VIP専用エリアアクセス",
-          "名刺交換会参加",
-          "懇親会参加",
-        ],
-      },
-    ],
-    "2": [
-      {
-        id: "dinner",
-        name: "特別ディナーコース",
-        price: 12000,
-        description: "シェフ特製の春の特別コースディナー（7品）",
-        benefits: ["7品の特別コース", "ウェルカムドリンク", "記念品プレゼント"],
-      },
-      {
-        id: "wine",
-        name: "ワインペアリングコース",
-        price: 18000,
-        description: "料理に合わせたワインペアリング付きコース",
-        benefits: [
-          "7品の特別コース",
-          "5種類のワインペアリング",
-          "ソムリエによる解説",
-        ],
-      },
-      {
-        id: "premium",
-        name: "プレミアムコース",
-        price: 25000,
-        description: "個室でのプライベートディナー（2名様まで）",
-        benefits: [
-          "個室利用",
-          "特別食材使用",
-          "シェフによる料理説明",
-          "記念写真撮影",
-        ],
-      },
-    ],
-  };
-
-  const event = events[eventId as keyof typeof events];
-  const tickets = ticketTypes[eventId as keyof typeof ticketTypes] || [];
-
-  if (!event) {
-    return <div>イベントが見つかりません</div>;
+  // ローディング中
+  if (loading) {
+    return <LoadingScreen />;
   }
+
+  // エラーまたはイベントが見つからない
+  if (error || !event) {
+    return <ErrorScreen message={error || "イベントが見つかりません"} />;
+  }
+
+  const tickets = event.ticket_types || [];
 
   const updateTicketCount = (ticketId: string, count: number) => {
     setSelectedTickets((prev) => ({
@@ -164,7 +61,7 @@ export default function EventDetail({ eventId }: EventDetailProps) {
       <main>
         <div className="relative h-96 overflow-hidden">
           <Image
-            src={event.image}
+            src={event.image_url || "/img/event.jpg"}
             alt={event.title}
             fill
             className="object-cover object-top"
@@ -184,7 +81,7 @@ export default function EventDetail({ eventId }: EventDetailProps) {
                 {event.title}
               </h1>
               <p className="text-xl text-gray-200 max-w-3xl">
-                {event.description}
+                {event.description || ""}
               </p>
             </div>
           </div>
@@ -198,7 +95,7 @@ export default function EventDetail({ eventId }: EventDetailProps) {
                   イベント詳細
                 </h2>
                 <p className="text-gray-700 leading-relaxed mb-6">
-                  {event.fullDescription}
+                  {event.description || ""}
                 </p>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -211,8 +108,20 @@ export default function EventDetail({ eventId }: EventDetailProps) {
                         <h3 className="font-semibold text-gray-900">
                           開催日時
                         </h3>
-                        <p className="text-gray-600">{event.date}</p>
-                        <p className="text-gray-600">{event.time}</p>
+                        <p className="text-gray-600">
+                          {new Date(event.date_start).toLocaleDateString("ja-JP", {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric"
+                          })}
+                        </p>
+                        <p className="text-gray-600">
+                          〜 {new Date(event.date_end).toLocaleDateString("ja-JP", {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric"
+                          })}
+                        </p>
                       </div>
                     </div>
 
@@ -222,10 +131,7 @@ export default function EventDetail({ eventId }: EventDetailProps) {
                       </div>
                       <div>
                         <h3 className="font-semibold text-gray-900">会場</h3>
-                        <p className="text-gray-600">{event.venue}</p>
-                        <p className="text-gray-500 text-sm">
-                          {event.venueAddress}
-                        </p>
+                        <p className="text-gray-600">{event.location}</p>
                       </div>
                     </div>
                   </div>
@@ -233,23 +139,11 @@ export default function EventDetail({ eventId }: EventDetailProps) {
                   <div className="space-y-4">
                     <div className="flex items-start space-x-3">
                       <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mt-1">
-                        <i className="ri-user-line text-blue-600"></i>
+                        <i className="ri-ticket-line text-blue-600"></i>
                       </div>
                       <div>
-                        <h3 className="font-semibold text-gray-900">主催者</h3>
-                        <p className="text-gray-600">{event.organizer}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start space-x-3">
-                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mt-1">
-                        <i className="ri-mail-line text-blue-600"></i>
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-gray-900">
-                          お問い合わせ
-                        </h3>
-                        <p className="text-gray-600">{event.contact}</p>
+                        <h3 className="font-semibold text-gray-900">チケット種類</h3>
+                        <p className="text-gray-600">{tickets.length}種類</p>
                       </div>
                     </div>
                   </div>
@@ -261,66 +155,74 @@ export default function EventDetail({ eventId }: EventDetailProps) {
                   チケット選択
                 </h2>
                 <div className="space-y-6">
-                  {tickets.map((ticket) => (
-                    <div
-                      key={ticket.id}
-                      className="border border-gray-200 rounded-lg p-6"
-                    >
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex-1">
-                          <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                            {ticket.name}
-                          </h3>
-                          <p className="text-gray-600 mb-3">
-                            {ticket.description}
-                          </p>
-                          <ul className="space-y-1">
-                            {ticket.benefits.map((benefit, index) => (
-                              <li
-                                key={index}
-                                className="flex items-center text-sm text-gray-600"
-                              >
-                                <i className="ri-check-line text-green-500 mr-2"></i>
-                                {benefit}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                        <div className="text-right ml-6">
-                          <p className="text-2xl font-bold text-blue-600 mb-4">
-                            ¥{ticket.price.toLocaleString()}
-                          </p>
-                          <div className="flex items-center space-x-3">
-                            <button
-                              onClick={() =>
-                                updateTicketCount(
-                                  ticket.id,
-                                  (selectedTickets[ticket.id] || 0) - 1
-                                )
-                              }
-                              className="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center cursor-pointer"
-                            >
-                              <i className="ri-subtract-line"></i>
-                            </button>
-                            <span className="w-8 text-center font-semibold">
-                              {selectedTickets[ticket.id] || 0}
-                            </span>
-                            <button
-                              onClick={() =>
-                                updateTicketCount(
-                                  ticket.id,
-                                  (selectedTickets[ticket.id] || 0) + 1
-                                )
-                              }
-                              className="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center cursor-pointer"
-                            >
-                              <i className="ri-add-line"></i>
-                            </button>
+                  {tickets.map((ticket) => {
+                    // 在庫計算
+                    const stock = ticket.quantity_total - ticket.quantity_sold;
+                    const isAvailable = stock > 0 && ticket.is_active;
+
+                    return (
+                      <div
+                        key={ticket.id}
+                        className="border border-gray-200 rounded-lg p-6"
+                      >
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h3 className="text-xl font-semibold text-gray-900">
+                                {ticket.name}
+                              </h3>
+                              {!isAvailable && (
+                                <span className="px-2 py-1 text-xs bg-red-100 text-red-600 rounded">
+                                  売り切れ
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-gray-600 mb-3">
+                              {ticket.description || ""}
+                            </p>
+                            <div className="text-sm text-gray-500">
+                              残り {stock} 枚
+                            </div>
+                          </div>
+                          <div className="text-right ml-6">
+                            <p className="text-2xl font-bold text-blue-600 mb-4">
+                              ¥{Number(ticket.price).toLocaleString()}
+                            </p>
+                            {isAvailable && (
+                              <div className="flex items-center space-x-3">
+                                <button
+                                  onClick={() =>
+                                    updateTicketCount(
+                                      ticket.id,
+                                      (selectedTickets[ticket.id] || 0) - 1
+                                    )
+                                  }
+                                  className="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center cursor-pointer"
+                                >
+                                  <i className="ri-subtract-line"></i>
+                                </button>
+                                <span className="w-8 text-center font-semibold">
+                                  {selectedTickets[ticket.id] || 0}
+                                </span>
+                                <button
+                                  onClick={() =>
+                                    updateTicketCount(
+                                      ticket.id,
+                                      (selectedTickets[ticket.id] || 0) + 1
+                                    )
+                                  }
+                                  disabled={(selectedTickets[ticket.id] || 0) >= stock}
+                                  className="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                  <i className="ri-add-line"></i>
+                                </button>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </div>

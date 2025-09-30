@@ -13,7 +13,6 @@ export default function ForgotPasswordForm() {
   const router = useRouter()
   const [step, setStep] = useState(1)
   const [email, setEmail] = useState('')
-  const [_verificationCode] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)

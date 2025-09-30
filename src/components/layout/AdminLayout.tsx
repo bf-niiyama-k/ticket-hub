@@ -1,11 +1,10 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { useAuth } from '@/hooks/useAuth';
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/useAuth";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -20,7 +19,7 @@ export default function AdminLayout({
   title,
   backHref,
   actions,
-  isPremiumUser = false
+  isPremiumUser = false,
 }: AdminLayoutProps) {
   const { user, profile, signOut } = useAuth();
   const router = useRouter();
@@ -28,16 +27,16 @@ export default function AdminLayout({
   const handleSignOut = async () => {
     try {
       await signOut();
-      router.push('/');
+      router.push("/");
     } catch (error) {
-      console.error('ログアウトエラー:', error);
+      console.error("ログアウトエラー:", error);
     }
   };
 
   // middlewareで認証チェック済みのため、ここでは何もチェックしない
 
-  const displayUsername = profile?.full_name || user?.email || '管理者';
-  const userIsPremium = profile?.role === 'admin' || isPremiumUser;
+  const displayUsername = profile?.full_name || user?.email || "管理者";
+  const userIsPremium = profile?.role === "admin" || isPremiumUser;
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm border-b">
@@ -45,7 +44,7 @@ export default function AdminLayout({
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
               {backHref && (
-                <Link 
+                <Link
                   href={backHref}
                   className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                 >
@@ -54,11 +53,14 @@ export default function AdminLayout({
               )}
               <h1 className="text-xl font-semibold text-gray-900">{title}</h1>
             </div>
-            
+
             <div className="flex items-center space-x-4">
               <span className="text-sm text-gray-600">{displayUsername}</span>
               {!userIsPremium ? (
-                <Badge variant="secondary" className="bg-orange-100 text-orange-800">
+                <Badge
+                  variant="secondary"
+                  className="bg-orange-100 text-orange-800"
+                >
                   無料プラン
                 </Badge>
               ) : (
@@ -75,14 +77,12 @@ export default function AdminLayout({
                 <i className="ri-logout-line mr-2"></i>
                 ログアウト
               </Button>
-              
+
               {actions ? (
                 actions
               ) : (
                 <Button asChild size="sm">
-                  <Link href="/">
-                    サイトを見る
-                  </Link>
+                  <Link href="/">サイトを見る</Link>
                 </Button>
               )}
             </div>

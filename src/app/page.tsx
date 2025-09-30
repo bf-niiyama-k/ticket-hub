@@ -4,8 +4,11 @@ import Link from "next/link";
 import { Header, Footer, EventCard } from "@/components";
 import type { EventCardData } from "@/components";
 import Image from "next/image";
+import { useEvents } from "@/hooks";
 
 export default function Home() {
+  const { events, loading, error } = useEvents(true); // 公開イベントのみ取得
+
   const features = [
     {
       icon: "ri-ticket-2-line",
@@ -29,38 +32,24 @@ export default function Home() {
     },
   ];
 
-  const upcomingEvents: EventCardData[] = [
-    {
-      id: 1,
-      title: "東京国際展示会2024",
-      date: "2024-03-15",
-      venue: "東京ビッグサイト",
-      price: 3500,
-      image: "/img/event.jpg",
-      status: "published",
-      category: "展示会",
-    },
-    {
-      id: 2,
-      title: "ホテル春の特別ディナー",
-      date: "2024-03-20",
-      venue: "グランドホテル東京",
-      price: 12000,
-      image: "/img/event.jpg",
-      status: "published",
-      category: "グルメ",
-    },
-    {
-      id: 3,
-      title: "ビジネスセミナー2024",
-      date: "2024-03-25",
-      venue: "品川コンベンションセンター",
-      price: 8000,
-      image: "/img/event.jpg",
-      status: "published",
-      category: "セミナー",
-    },
-  ];
+  // EventWithTicketTypes → EventCardData に変換
+  const upcomingEvents: EventCardData[] = events.slice(0, 3).map(event => {
+    // 最安値チケットを取得
+    const minPrice = event.ticket_types && event.ticket_types.length > 0
+      ? Math.min(...event.ticket_types.map(t => Number(t.price)))
+      : 0;
+
+    return {
+      id: event.id,
+      title: event.title,
+      date: event.date_start,
+      venue: event.location,
+      price: minPrice,
+      image: event.image_url || "/img/event.jpg",
+      status: event.is_published ? "published" : "draft",
+      category: "展示会", // DBにカテゴリがない場合はデフォルト値
+    };
+  });
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -144,20 +133,37 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {upcomingEvents.map((event) => (
-                <EventCard key={event.id} event={event} variant="default" />
-              ))}
-            </div>
+            {loading ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                <p className="mt-4 text-gray-600">読み込み中...</p>
+              </div>
+            ) : error ? (
+              <div className="text-center py-12">
+                <p className="text-red-600">{error}</p>
+              </div>
+            ) : upcomingEvents.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-gray-600">現在公開中のイベントはありません</p>
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {upcomingEvents.map((event) => (
+                    <EventCard key={event.id} event={event} variant="default" />
+                  ))}
+                </div>
 
-            <div className="text-center mt-12">
-              <Link
-                href="/events"
-                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg text-lg font-semibold whitespace-nowrap cursor-pointer"
-              >
-                すべてのイベントを見る
-              </Link>
-            </div>
+                <div className="text-center mt-12">
+                  <Link
+                    href="/events"
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg text-lg font-semibold whitespace-nowrap cursor-pointer"
+                  >
+                    すべてのイベントを見る
+                  </Link>
+                </div>
+              </>
+            )}
           </div>
         </section>
 

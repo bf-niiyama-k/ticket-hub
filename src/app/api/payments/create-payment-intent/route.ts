@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createPaymentIntent, handleStripeError } from "../../../../lib/stripe";
 import { createPayPayPayment } from "../../../../lib/paypay";
+import { eventAPI } from "../../../../lib/database";
 import type { PaymentMethod, OrderItem } from "../../../../types/payment";
 
 export async function POST(request: NextRequest) {
@@ -52,6 +53,48 @@ export async function POST(request: NextRequest) {
     if (!customerInfo?.email) {
       return NextResponse.json(
         { error: { type: "validation_error", message: "メールアドレスが必要です" } },
+        { status: 400 }
+      );
+    }
+
+    // イベント情報とチケット種類を取得
+    const event = await eventAPI.getEventById(eventId);
+    if (!event) {
+      return NextResponse.json(
+        { error: { type: "validation_error", message: "イベントが見つかりません" } },
+        { status: 404 }
+      );
+    }
+
+    // チケット在庫確認と金額計算
+    let calculatedAmount = 0;
+    for (const item of orderItems) {
+      const ticketType = event.ticket_types?.find(tt => tt.id === item.ticketId);
+      if (!ticketType) {
+        return NextResponse.json(
+          { error: { type: "validation_error", message: `チケット種類が見つかりません: ${item.ticketId}` } },
+          { status: 400 }
+        );
+      }
+
+      const availableStock = ticketType.quantity_total - ticketType.quantity_sold;
+      if (availableStock < item.quantity) {
+        return NextResponse.json(
+          { error: { type: "validation_error", message: `${ticketType.name}の在庫が不足しています（残り${availableStock}枚）` } },
+          { status: 400 }
+        );
+      }
+
+      calculatedAmount += ticketType.price * item.quantity;
+    }
+
+    // システム手数料を追加（5%）
+    calculatedAmount += Math.floor(calculatedAmount * 0.05);
+
+    // 金額検証（改ざん防止）
+    if (Math.abs(calculatedAmount - amount) > 1) {
+      return NextResponse.json(
+        { error: { type: "validation_error", message: "金額が一致しません" } },
         { status: 400 }
       );
     }

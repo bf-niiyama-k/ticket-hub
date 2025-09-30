@@ -133,7 +133,17 @@ export interface UsePaymentActions {
     customerInfo: Partial<PaymentFormData>;
     eventId: string;
   }) => Promise<PaymentResult>;
-  confirmPayment: (paymentIntentId: string) => Promise<PaymentResult>;
+  confirmPayment: (
+    paymentIntentId: string,
+    options?: {
+      userId?: string;
+      guestInfo?: {
+        name: string;
+        email: string;
+        phone: string;
+      };
+    }
+  ) => Promise<PaymentResult>;
   cancelPayment: (paymentIntentId: string) => Promise<boolean>;
   clearError: () => void;
 }

@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { confirmPaymentIntent, retrievePaymentIntent, handleStripeError } from "../../../../lib/stripe";
 import { getPayPayPaymentStatus } from "../../../../lib/paypay";
-// import { createClient } from "../../../../lib/supabase/server"; // 一時的に未使用
+import { supabase } from "../../../../lib/supabase/client";
+import { orderAPI } from "../../../../lib/database";
+import { randomUUID } from "crypto";
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,10 +12,18 @@ export async function POST(request: NextRequest) {
       paymentIntentId,
       paymentMethod,
       orderId,
+      userId,
+      guestInfo,
     }: {
       paymentIntentId: string;
       paymentMethod: "credit" | "paypay" | "convenience";
       orderId?: string;
+      userId?: string;
+      guestInfo?: {
+        name: string;
+        email: string;
+        phone: string;
+      };
     } = body;
 
     if (!paymentIntentId) {
@@ -23,10 +33,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // const supabase = await createClient(); // 一時的に未使用
+    let paymentStatus: "succeeded" | "pending" | "failed" = "pending";
+    let paymentMetadata: Record<string, string> = {};
 
+    // 決済ステータスの確認
     if (paymentMethod === "paypay") {
-      // PayPay決済の場合
       if (!orderId) {
         return NextResponse.json(
           { error: { type: "validation_error", message: "Order IDが必要です" } },
@@ -37,28 +48,9 @@ export async function POST(request: NextRequest) {
       const result = await getPayPayPaymentStatus(orderId);
 
       if (result.success && result.status === "COMPLETED") {
-        // 決済成功をデータベースに記録
-        // TODO: Supabase型定義の問題により一時的にコメントアウト
-        // const { error: dbError } = await supabase
-        //   .from("orders")
-        //   .update({
-        //     status: "paid" as const,
-        //     payment_id: paymentIntentId,
-        //   })
-        //   .eq("id", orderId);
-
-        // if (dbError) {
-        //   console.error("Database update error:", dbError);
-        // }
-
-        console.log("PayPay payment completed for order:", orderId);
-
-        return NextResponse.json({
-          success: true,
-          status: "completed",
-          orderId,
-        });
+        paymentStatus = "succeeded";
       } else if (result.status === "FAILED" || result.status === "CANCELED") {
+        paymentStatus = "failed";
         return NextResponse.json({
           success: false,
           error: {
@@ -78,68 +70,19 @@ export async function POST(request: NextRequest) {
     } else {
       // Stripe決済の場合
       try {
-        // PaymentIntentの現在のステータスを確認
         const paymentIntent = await retrievePaymentIntent(paymentIntentId);
 
         if (paymentIntent.status === "succeeded") {
-          // 決済成功をデータベースに記録
-          // TODO: Supabase型定義の問題により一時的にコメントアウト
-          // const orderIdFromMetadata = paymentIntent.metadata?.orderId;
-          
-          // if (orderIdFromMetadata) {
-          //   const { error: dbError } = await supabase
-          //     .from("orders")
-          //     .update({
-          //       payment_status: "completed",
-          //       payment_intent_id: paymentIntentId,
-          //       updated_at: new Date().toISOString(),
-          //     })
-          //     .eq("order_id", orderIdFromMetadata);
-
-          //   if (dbError) {
-          //     console.error("Database update error:", dbError);
-          //   }
-          // }
-
-          console.log("Stripe payment completed for payment intent:", paymentIntentId);
-
-          return NextResponse.json({
-            success: true,
-            status: "completed",
-            orderId: paymentIntent.metadata?.['orderId'] || null,
-          });
+          paymentStatus = "succeeded";
+          paymentMetadata = paymentIntent.metadata as Record<string, string>;
         } else if (paymentIntent.status === "requires_confirmation") {
-          // 確認が必要な場合
           const confirmedPayment = await confirmPaymentIntent(paymentIntentId);
-          
+
           if (confirmedPayment.status === "succeeded") {
-            // 決済成功をデータベースに記録
-            // TODO: Supabase型定義の問題により一時的にコメントアウト
-            // const orderIdFromMetadata = confirmedPayment.metadata?.orderId;
-            
-            // if (orderIdFromMetadata) {
-            //   const { error: dbError } = await supabase
-            //     .from("orders")
-            //     .update({
-            //       payment_status: "completed",
-            //       payment_intent_id: paymentIntentId,
-            //       updated_at: new Date().toISOString(),
-            //     })
-            //     .eq("order_id", orderIdFromMetadata);
-
-            //   if (dbError) {
-            //     console.error("Database update error:", dbError);
-            //   }
-            // }
-
-            console.log("Payment confirmed successfully for payment intent:", paymentIntentId);
-
-            return NextResponse.json({
-              success: true,
-              status: "completed",
-              orderId: confirmedPayment.metadata?.['orderId'] || null,
-            });
+            paymentStatus = "succeeded";
+            paymentMetadata = confirmedPayment.metadata as Record<string, string>;
           } else {
+            paymentStatus = "failed";
             return NextResponse.json({
               success: false,
               error: {
@@ -148,23 +91,8 @@ export async function POST(request: NextRequest) {
               },
             });
           }
-        } else if (paymentIntent.status === "requires_payment_method") {
-          return NextResponse.json({
-            success: false,
-            error: {
-              type: "payment_failed",
-              message: "決済方法が無効です",
-            },
-          });
-        } else if (paymentIntent.status === "canceled") {
-          return NextResponse.json({
-            success: false,
-            error: {
-              type: "payment_failed",
-              message: "決済がキャンセルされました",
-            },
-          });
         } else {
+          paymentStatus = "failed";
           return NextResponse.json({
             success: false,
             error: {
@@ -176,7 +104,7 @@ export async function POST(request: NextRequest) {
       } catch (error: unknown) {
         console.error("Stripe payment confirmation error:", error);
         const stripeError = handleStripeError(error);
-        
+
         return NextResponse.json(
           {
             success: false,
@@ -190,9 +118,130 @@ export async function POST(request: NextRequest) {
         );
       }
     }
+
+    // 決済が成功した場合、注文作成・チケット発行を実行
+    if (paymentStatus === "succeeded") {
+      try {
+        // メタデータから注文情報を取得
+        const eventId = paymentMetadata['eventId'];
+        const orderItems = JSON.parse(paymentMetadata['orderItems'] || "[]");
+        const totalAmount = parseInt(paymentMetadata['amount'] || "0", 10);
+
+        if (!eventId || !orderItems || orderItems.length === 0) {
+          return NextResponse.json({
+            success: false,
+            error: {
+              type: "validation_error",
+              message: "注文情報が不足しています",
+            },
+          });
+        }
+
+        // 注文作成
+        const order = await orderAPI.createOrder({
+          user_id: userId || 'guest', // TODO: ゲストユーザーの処理を後で改善
+          event_id: eventId,
+          total_amount: totalAmount,
+          status: "paid",
+          payment_method: paymentMethod === 'credit' ? 'credit_card' : paymentMethod === 'paypay' ? 'paypal' : 'convenience_store',
+          payment_id: paymentIntentId,
+          guest_info: guestInfo ? guestInfo as unknown as Record<string, unknown> : null,
+        } as Parameters<typeof orderAPI.createOrder>[0]);
+
+        // 注文明細・チケット発行
+        const ticketsToCreate = [];
+
+        for (const item of orderItems) {
+          const { ticketId, quantity } = item;
+
+          // チケット種類情報取得
+          const { data: ticketType } = await supabase
+            .from("ticket_types")
+            .select("*")
+            .eq("id", ticketId)
+            .single();
+
+          if (!ticketType) {
+            console.error(`Ticket type not found: ${ticketId}`);
+            continue;
+          }
+
+          // 注文明細作成
+          const { data: orderItem } = await supabase
+            .from("order_items")
+            .insert({
+              order_id: order.id,
+              ticket_type_id: ticketId,
+              quantity: quantity,
+              unit_price: ticketType.price,
+              total_price: ticketType.price * quantity,
+            })
+            .select()
+            .single();
+
+          if (!orderItem) {
+            console.error(`Failed to create order item for ticket: ${ticketId}`);
+            continue;
+          }
+
+          // チケット発行（枚数分）
+          for (let i = 0; i < quantity; i++) {
+            const qrCode = `${randomUUID()}-${ticketId}`;
+            ticketsToCreate.push({
+              order_item_id: orderItem.id,
+              ticket_type_id: ticketId,
+              event_id: eventId,
+              user_id: userId || 'guest', // TODO: ゲストユーザーの処理を後で改善
+              qr_code: qrCode,
+              status: "valid",
+            });
+          }
+
+          // チケット在庫更新
+          await supabase
+            .from("ticket_types")
+            .update({
+              quantity_sold: ticketType.quantity_sold + quantity,
+            })
+            .eq("id", ticketId);
+        }
+
+        // チケット一括作成
+        if (ticketsToCreate.length > 0) {
+          await supabase.from("tickets").insert(ticketsToCreate);
+        }
+
+        return NextResponse.json({
+          success: true,
+          status: "completed",
+          orderId: order.id,
+        });
+      } catch (dbError: unknown) {
+        console.error("Database operation error:", dbError);
+        return NextResponse.json(
+          {
+            success: false,
+            error: {
+              type: "database_error",
+              message: "注文の作成に失敗しました",
+              details: dbError instanceof Error ? dbError.message : String(dbError),
+            },
+          },
+          { status: 500 }
+        );
+      }
+    }
+
+    return NextResponse.json({
+      success: false,
+      error: {
+        type: "payment_failed",
+        message: "決済処理が完了していません",
+      },
+    });
   } catch (error: unknown) {
     console.error("Payment confirmation error:", error);
-    
+
     return NextResponse.json(
       {
         success: false,
