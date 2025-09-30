@@ -211,6 +211,20 @@ export const ticketTypeAPI = {
     } catch (error) {
       throw new DatabaseError('チケット種類更新に失敗しました', error as Error);
     }
+  },
+
+  // チケット種類削除
+  async deleteTicketType(id: string): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('ticket_types')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw new DatabaseError('チケット種類削除に失敗しました', error);
+    } catch (error) {
+      throw new DatabaseError('チケット種類削除に失敗しました', error as Error);
+    }
   }
 };
 
@@ -256,6 +270,31 @@ export const orderAPI = {
       return data || [];
     } catch (error) {
       throw new DatabaseError('注文一覧取得に失敗しました', error as Error);
+    }
+  },
+
+  // 単一注文取得
+  async getOrderById(orderId: string): Promise<OrderWithItems | null> {
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select(`
+          *,
+          order_items (
+            *,
+            ticket_type:ticket_types (*)
+          )
+        `)
+        .eq('id', orderId)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') return null;
+        throw new DatabaseError('注文取得に失敗しました', error);
+      }
+      return data;
+    } catch (error) {
+      throw new DatabaseError('注文取得に失敗しました', error as Error);
     }
   },
 

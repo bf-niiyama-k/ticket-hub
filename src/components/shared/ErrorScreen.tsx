@@ -3,7 +3,7 @@ interface ErrorScreenProps {
   onRetry?: () => void;
 }
 
-export function ErrorScreen({ message = "エラーが発生しました", onRetry }: ErrorScreenProps) {
+export default function ErrorScreen({ message = "エラーが発生しました", onRetry }: ErrorScreenProps) {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
       <div className="text-center">

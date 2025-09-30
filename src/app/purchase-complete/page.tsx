@@ -1,46 +1,28 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import Header from "../../components/layout/Header";
 import Footer from "../../components/layout/Footer";
+import LoadingScreen from "../../components/shared/LoadingScreen";
+import ErrorScreen from "../../components/shared/ErrorScreen";
+import QRCode from "../../components/ticket/QRCode";
+import { useOrder } from "@/hooks/useOrders";
+import { useTickets } from "@/hooks/useTickets";
 
-export default function PurchaseCompletePage() {
-  const [qrCode, setQrCode] = useState("");
+function PurchaseCompleteContent() {
+  const searchParams = useSearchParams();
+  const orderId = searchParams.get('orderId');
 
-  useEffect(() => {
-    // QRコード生成のシミュレーション
-    const generateQRCode = () => {
-      const ticketId = "TICKET-" + Date.now();
-      // 実際のQRコード生成ロジックは今後実装予定
-      setQrCode("/img/event.jpg");
-      console.log("Generated ticket ID:", ticketId);
-    };
-    
-    generateQRCode();
-  }, []);
+  const { order, loading: orderLoading, error: orderError } = useOrder(orderId);
+  const { tickets, loading: ticketsLoading, error: ticketsError } = useTickets(orderId);
 
-  const orderDetails = {
-    orderNumber: "ORDER-" + Date.now().toString().slice(-8),
-    eventTitle: "東京国際展示会2024",
-    eventDate: "2024年3月15日",
-    eventTime: "10:00 - 18:00",
-    venue: "東京ビッグサイト",
-    tickets: [
-      { name: "一般入場券", quantity: 2, price: 3500 },
-      { name: "VIPパス", quantity: 1, price: 8500 },
-    ],
-    totalAmount: 15500,
-    systemFee: 775,
-    finalAmount: 16275,
-    purchaseDate: new Date().toLocaleDateString("ja-JP"),
-    customerName: "田中太郎",
-    customerEmail: "tanaka@example.com",
-  };
+  const loading = orderLoading || ticketsLoading;
+  const error = orderError || ticketsError;
 
   const handleDownloadTicket = () => {
-    // チケットPDFダウンロードのシミュレーション
+    // チケットPDFダウンロードのシミュレーション（Phase 3で実装）
     alert("チケットPDFをダウンロードしました（シミュレーション）");
   };
 
@@ -48,6 +30,14 @@ export default function PurchaseCompletePage() {
     // カレンダー追加のシミュレーション
     alert("カレンダーに追加しました（シミュレーション）");
   };
+
+  if (loading) return <LoadingScreen />;
+  if (error) return <ErrorScreen message={error} />;
+  if (!order) return <ErrorScreen message="注文が見つかりません" />;
+
+  // イベント情報を取得（最初のチケットから）
+  const firstTicket = tickets[0];
+  const event = firstTicket?.event;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -76,15 +66,19 @@ export default function PurchaseCompletePage() {
               </h2>
 
               <div className="bg-gray-50 rounded-lg p-8 mb-6">
-                {qrCode ? (
-                  <Image
-                    src={qrCode}
-                    alt="入場用QRコード"
-                    width={192}
-                    height={192}
-                    className="w-48 h-48 mx-auto rounded-lg"
-                    unoptimized={true}
-                  />
+                {tickets.length > 0 && tickets[0]?.qr_code ? (
+                  <div className="space-y-6">
+                    {tickets.map((ticket, index) => (
+                      <div key={ticket.id} className="border-b pb-6 last:border-b-0">
+                        <p className="text-sm text-gray-600 mb-4 font-medium">
+                          {ticket.ticket_type?.name} - チケット #{index + 1}
+                        </p>
+                        <div className="flex justify-center">
+                          <QRCode value={ticket.qr_code} size={192} level="H" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 ) : (
                   <div className="w-48 h-48 bg-gray-200 rounded-lg mx-auto flex items-center justify-center">
                     <div className="text-center">
@@ -139,54 +133,60 @@ export default function PurchaseCompletePage() {
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-sm text-gray-600">注文番号</span>
                     <span className="font-mono text-sm">
-                      {orderDetails.orderNumber}
+                      {order.id}
                     </span>
                   </div>
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-sm text-gray-600">購入日</span>
-                    <span className="text-sm">{orderDetails.purchaseDate}</span>
+                    <span className="text-sm">
+                      {new Date(order.created_at).toLocaleDateString("ja-JP")}
+                    </span>
                   </div>
                 </div>
 
-                <div className="border-t border-gray-200 pt-6">
-                  <h3 className="font-semibold text-gray-900 mb-3">
-                    イベント情報
-                  </h3>
-                  <div className="space-y-2">
-                    <p className="font-medium text-lg">
-                      {orderDetails.eventTitle}
-                    </p>
-                    <div className="flex items-center text-gray-600">
-                      <i className="ri-calendar-line mr-2"></i>
-                      <span>
-                        {orderDetails.eventDate} {orderDetails.eventTime}
-                      </span>
-                    </div>
-                    <div className="flex items-center text-gray-600">
-                      <i className="ri-map-pin-line mr-2"></i>
-                      <span>{orderDetails.venue}</span>
+                {event && (
+                  <div className="border-t border-gray-200 pt-6">
+                    <h3 className="font-semibold text-gray-900 mb-3">
+                      イベント情報
+                    </h3>
+                    <div className="space-y-2">
+                      <p className="font-medium text-lg">
+                        {event.title}
+                      </p>
+                      <div className="flex items-center text-gray-600">
+                        <i className="ri-calendar-line mr-2"></i>
+                        <span>
+                          {new Date(event.date_start).toLocaleDateString("ja-JP")} {event.time_start || ''}
+                        </span>
+                      </div>
+                      {event.venue && (
+                        <div className="flex items-center text-gray-600">
+                          <i className="ri-map-pin-line mr-2"></i>
+                          <span>{event.venue}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
-                </div>
+                )}
 
                 <div className="border-t border-gray-200 pt-6">
                   <h3 className="font-semibold text-gray-900 mb-3">
                     チケット詳細
                   </h3>
                   <div className="space-y-3">
-                    {orderDetails.tickets.map((ticket, index) => (
+                    {order.order_items?.map((item) => (
                       <div
-                        key={index}
+                        key={item.id}
                         className="flex justify-between items-center py-2 border-b border-gray-100"
                       >
                         <div>
-                          <p className="font-medium">{ticket.name}</p>
+                          <p className="font-medium">{item.ticket_type?.name}</p>
                           <p className="text-sm text-gray-500">
-                            ¥{ticket.price.toLocaleString()} × {ticket.quantity}
+                            ¥{item.unit_price.toLocaleString()} × {item.quantity}
                           </p>
                         </div>
                         <p className="font-semibold">
-                          ¥{(ticket.price * ticket.quantity).toLocaleString()}
+                          ¥{item.total_price.toLocaleString()}
                         </p>
                       </div>
                     ))}
@@ -197,15 +197,11 @@ export default function PurchaseCompletePage() {
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span className="text-gray-600">小計</span>
-                      <span>¥{orderDetails.totalAmount.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">システム手数料</span>
-                      <span>¥{orderDetails.systemFee.toLocaleString()}</span>
+                      <span>¥{order.total_amount.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between text-lg font-bold text-blue-600 pt-2 border-t">
                       <span>合計</span>
-                      <span>¥{orderDetails.finalAmount.toLocaleString()}</span>
+                      <span>¥{order.total_amount.toLocaleString()}</span>
                     </div>
                   </div>
                 </div>
@@ -217,12 +213,12 @@ export default function PurchaseCompletePage() {
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span className="text-gray-600">お名前</span>
-                      <span>{orderDetails.customerName}</span>
+                      <span>{order.guest_info?.name || '-'}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">メールアドレス</span>
                       <span className="text-sm">
-                        {orderDetails.customerEmail}
+                        {order.guest_info?.email || '-'}
                       </span>
                     </div>
                   </div>
@@ -278,5 +274,13 @@ export default function PurchaseCompletePage() {
 
       <Footer />
     </div>
+  );
+}
+
+export default function PurchaseCompletePage() {
+  return (
+    <Suspense fallback={<LoadingScreen />}>
+      <PurchaseCompleteContent />
+    </Suspense>
   );
 }

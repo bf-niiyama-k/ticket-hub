@@ -1,21 +1,12 @@
 import Stripe from "stripe";
-import { loadStripe } from "@stripe/stripe-js";
 
 // サーバーサイド用のStripe設定
+// 注意: このファイルはサーバーサイドでのみ使用してください
+// クライアントサイドでは stripe-client.ts を使用してください
 export const stripe = new Stripe(process.env['STRIPE_SECRET_KEY']!, {
   apiVersion: "2025-08-27.basil",
   typescript: true,
 });
-
-// クライアントサイド用のStripe設定
-let stripePromise: Promise<import('@stripe/stripe-js').Stripe | null>;
-
-export const getStripe = () => {
-  if (!stripePromise) {
-    stripePromise = loadStripe(process.env['NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY']!);
-  }
-  return stripePromise;
-};
 
 // Stripe用のユーティリティ関数
 export const formatAmountForStripe = (amount: number, currency: string = "jpy"): number => {

@@ -9,6 +9,7 @@ export async function generateStaticParams() {
   ];
 }
 
-export default function EventEditPage({ params }: { params: { id: string } }) {
+export default async function EventEditPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   return <EventEdit eventId={params.id} />;
 }

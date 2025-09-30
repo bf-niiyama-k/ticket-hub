@@ -11,6 +11,7 @@ export async function generateStaticParams() {
   ];
 }
 
-export default function EventPage({ params }: { params: { id: string } }) {
+export default async function EventPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   return <EventDetail eventId={params.id} />;
 }

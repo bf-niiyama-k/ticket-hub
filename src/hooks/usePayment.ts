@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { getStripe } from "../lib/stripe";
+import { getStripe } from "../lib/stripe-client";
 import type {
   UsePaymentReturn,
   PaymentMethod,

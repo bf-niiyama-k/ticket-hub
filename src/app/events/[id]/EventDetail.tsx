@@ -6,7 +6,8 @@ import Image from "next/image";
 import Header from "../../../components/layout/Header";
 import Footer from "../../../components/layout/Footer";
 import { useEvent } from "@/hooks";
-import { LoadingScreen, ErrorScreen } from "@/components";
+import LoadingScreen from "@/components/shared/LoadingScreen";
+import ErrorScreen from "@/components/shared/ErrorScreen";
 
 interface EventDetailProps {
   eventId: string;

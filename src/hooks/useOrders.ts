@@ -63,3 +63,32 @@ export function useOrders(userId?: string) {
     updateOrder
   };
 }
+
+export function useOrder(orderId: string | null) {
+  const [order, setOrder] = useState<OrderWithItems | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!orderId) {
+      setLoading(false);
+      return;
+    }
+
+    const fetchOrder = async () => {
+      try {
+        setLoading(true);
+        const data = await orderAPI.getOrderById(orderId);
+        setOrder(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : '注文情報の取得に失敗しました');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrder();
+  }, [orderId]);
+
+  return { order, loading, error };
+}
