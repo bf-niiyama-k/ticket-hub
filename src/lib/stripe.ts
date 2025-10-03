@@ -136,6 +136,60 @@ export const validateWebhookSignature = (
   return stripe.webhooks.constructEvent(payload, signature, secret);
 };
 
+// Payment Linkを作成（動的に生成）
+export const createPaymentLink = async (params: {
+  lineItems: Array<{
+    priceData: {
+      productName: string;
+      currency?: string;
+      unitAmount: number;
+    };
+    quantity: number;
+  }>;
+  metadata?: Record<string, string>;
+  afterCompletionUrl?: string;
+}): Promise<Stripe.PaymentLink> => {
+  const { lineItems, metadata = {}, afterCompletionUrl } = params;
+
+  // line_itemsを構築
+  const formattedLineItems = lineItems.map(item => ({
+    price_data: {
+      product_data: {
+        name: item.priceData.productName,
+      },
+      currency: item.priceData.currency || 'jpy',
+      unit_amount: formatAmountForStripe(item.priceData.unitAmount, item.priceData.currency || 'jpy'),
+    },
+    quantity: item.quantity,
+  }));
+
+  const paymentLinkParams: Stripe.PaymentLinkCreateParams = {
+    line_items: formattedLineItems,
+    metadata,
+  };
+
+  // リダイレクト先URLを設定
+  if (afterCompletionUrl) {
+    paymentLinkParams.after_completion = {
+      type: 'redirect',
+      redirect: {
+        url: afterCompletionUrl,
+      },
+    };
+  }
+
+  return await stripe.paymentLinks.create(paymentLinkParams);
+};
+
+// Checkout Sessionを取得（Payment Linkから作成されたセッション）
+export const retrieveCheckoutSession = async (
+  sessionId: string
+): Promise<Stripe.Checkout.Session> => {
+  return await stripe.checkout.sessions.retrieve(sessionId, {
+    expand: ['line_items', 'payment_intent'],
+  });
+};
+
 // エラーハンドリング用のユーティリティ
 export const handleStripeError = (error: unknown): { code: string; message: string } => {
   // Stripeエラーの型ガード

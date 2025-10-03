@@ -9,6 +9,7 @@ import QRCodeModal from "../../components/ticket/QRCodeModal";
 import LoadingScreen from "../../components/shared/LoadingScreen";
 import ErrorScreen from "../../components/shared/ErrorScreen";
 import { useUserTickets } from "@/hooks/useTickets";
+import { useAuth } from "@/hooks/useAuth";
 
 interface TicketWithDetails {
   id: string;
@@ -35,10 +36,9 @@ export default function MyTicketsPage() {
   const [selectedTicket, setSelectedTicket] = useState<TicketWithDetails | null>(null);
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
 
-  // TODO: 認証実装後はuseAuthからユーザーIDを取得
-  // const { user } = useAuth();
-  // 仮のユーザーID（認証実装前）
-  const userId = "00000000-0000-0000-0000-000000000001"; // TODO: 実際の認証から取得
+  // 認証情報を取得
+  const { user, loading: authLoading } = useAuth();
+  const userId = user?.id || null;
 
   const { tickets, loading, error } = useUserTickets(userId);
 
@@ -74,13 +74,23 @@ export default function MyTicketsPage() {
     setSelectedTicket(null);
   };
 
-  if (loading) return <LoadingScreen />;
+  if (authLoading || loading) return <LoadingScreen />;
   if (error) return <ErrorScreen message={error} />;
 
-  // 認証チェック（TODO: 実際の認証実装後に有効化）
-  // if (!userId) {
-  //   return <ErrorScreen message="ログインが必要です" />;
-  // }
+  // 認証チェック
+  if (!userId) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <main className="py-12">
+          <div className="max-w-7xl mx-auto px-6">
+            <ErrorScreen message="ログインが必要です。ログインしてチケットを確認してください。" />
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

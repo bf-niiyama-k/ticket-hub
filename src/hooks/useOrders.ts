@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { orderAPI } from '../lib/database';
 import type { OrderWithItems } from '../types/database';
+import type { TicketWithDetails } from '../lib/supabase/types';
 
 export function useOrders(userId?: string) {
   const [orders, setOrders] = useState<OrderWithItems[]>([]);
@@ -66,6 +67,7 @@ export function useOrders(userId?: string) {
 
 export function useOrder(orderId: string | null) {
   const [order, setOrder] = useState<OrderWithItems | null>(null);
+  const [tickets, setTickets] = useState<TicketWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -78,8 +80,24 @@ export function useOrder(orderId: string | null) {
     const fetchOrder = async () => {
       try {
         setLoading(true);
-        const data = await orderAPI.getOrderById(orderId);
-        setOrder(data);
+
+        // カスタムIDかUUIDかを判定
+        const isCustomId = orderId.startsWith('ORDER-');
+
+        if (isCustomId) {
+          // カスタムIDの場合はAPIエンドポイントを使用
+          const response = await fetch(`/api/orders/by-custom-id?custom_order_id=${orderId}`);
+          if (!response.ok) {
+            throw new Error('注文が見つかりません');
+          }
+          const { order: data, tickets: ticketsData } = await response.json();
+          setOrder(data);
+          setTickets(ticketsData || []);
+        } else {
+          // UUIDの場合は既存のAPIを使用
+          const data = await orderAPI.getOrderById(orderId);
+          setOrder(data);
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : '注文情報の取得に失敗しました');
       } finally {
@@ -90,5 +108,5 @@ export function useOrder(orderId: string | null) {
     fetchOrder();
   }, [orderId]);
 
-  return { order, loading, error };
+  return { order, tickets, loading, error };
 }

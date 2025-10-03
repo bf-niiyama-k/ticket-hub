@@ -73,7 +73,7 @@ export function useTickets(orderId: string | null) {
   return { tickets, loading, error };
 }
 
-export function useUserTickets(userId: string | undefined) {
+export function useUserTickets(userId: string | null | undefined) {
   const [tickets, setTickets] = useState<TicketWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -81,6 +81,7 @@ export function useUserTickets(userId: string | undefined) {
   useEffect(() => {
     if (!userId) {
       setLoading(false);
+      setTickets([]);
       return;
     }
 

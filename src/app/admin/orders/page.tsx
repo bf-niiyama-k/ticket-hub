@@ -20,13 +20,21 @@ export default function OrderManagement() {
   );
 
   // 顧客名を取得するヘルパー関数
-  const getCustomerName = (userId: string) => {
+  const getCustomerName = (userId: string | null, guestInfo?: { name?: string; email?: string } | null) => {
+    if (!userId) {
+      // ゲスト購入の場合
+      return guestInfo?.name || 'ゲスト';
+    }
     const customer = customers.find(c => c.id === userId);
     return customer?.full_name || customer?.email || 'ゲスト';
   };
 
   // 顧客メールを取得するヘルパー関数
-  const getCustomerEmail = (userId: string) => {
+  const getCustomerEmail = (userId: string | null, guestInfo?: { name?: string; email?: string } | null) => {
+    if (!userId) {
+      // ゲスト購入の場合
+      return guestInfo?.email || '';
+    }
     const customer = customers.find(c => c.id === userId);
     return customer?.email || '';
   };
@@ -252,8 +260,8 @@ export default function OrderManagement() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div>
-                          <div className="text-sm font-medium text-gray-900">{getCustomerName(order.user_id)}</div>
-                          <div className="text-sm text-gray-500">{getCustomerEmail(order.user_id)}</div>
+                          <div className="text-sm font-medium text-gray-900">{getCustomerName(order.user_id, order.guest_info)}</div>
+                          <div className="text-sm text-gray-500">{getCustomerEmail(order.user_id, order.guest_info)}</div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">

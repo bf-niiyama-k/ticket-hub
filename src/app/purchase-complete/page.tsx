@@ -9,17 +9,12 @@ import LoadingScreen from "../../components/shared/LoadingScreen";
 import ErrorScreen from "../../components/shared/ErrorScreen";
 import QRCode from "../../components/ticket/QRCode";
 import { useOrder } from "@/hooks/useOrders";
-import { useTickets } from "@/hooks/useTickets";
 
 function PurchaseCompleteContent() {
   const searchParams = useSearchParams();
-  const orderId = searchParams.get('orderId');
+  const orderId = searchParams.get('order_id') || searchParams.get('orderId');
 
-  const { order, loading: orderLoading, error: orderError } = useOrder(orderId);
-  const { tickets, loading: ticketsLoading, error: ticketsError } = useTickets(orderId);
-
-  const loading = orderLoading || ticketsLoading;
-  const error = orderError || ticketsError;
+  const { order, tickets, loading, error } = useOrder(orderId);
 
   const handleDownloadTicket = () => {
     // チケットPDFダウンロードのシミュレーション（Phase 3で実装）
@@ -35,9 +30,8 @@ function PurchaseCompleteContent() {
   if (error) return <ErrorScreen message={error} />;
   if (!order) return <ErrorScreen message="注文が見つかりません" />;
 
-  // イベント情報を取得（最初のチケットから）
-  const firstTicket = tickets[0];
-  const event = firstTicket?.event;
+  // イベント情報を取得（orderから直接取得）
+  const event = order.event;
 
   return (
     <div className="min-h-screen bg-gray-50">

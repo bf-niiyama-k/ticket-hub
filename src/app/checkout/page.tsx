@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense, useCallback } from "react";
+import { useState, Suspense, useCallback, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import Header from "../../components/layout/Header";
@@ -9,21 +9,25 @@ import LoadingScreen from "../../components/shared/LoadingScreen";
 import ErrorScreen from "../../components/shared/ErrorScreen";
 import { usePayment } from "../../hooks/usePayment";
 import { useEvent } from "../../hooks/useEvents";
+import { useAuth } from "../../hooks/useAuth";
 import type { PaymentMethod, OrderItem } from "../../types/payment";
 
 function CheckoutContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [step, setStep] = useState(1);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>("credit");
   const [stockError, setStockError] = useState<string | null>(null);
 
+  // 認証情報を取得
+  const { user, profile, loading: authLoading, isAuthenticated } = useAuth();
+
   const eventId = searchParams.get("event");
   const ticketsParam = searchParams.get("tickets");
-  const selectedTickets = ticketsParam
-    ? JSON.parse(decodeURIComponent(ticketsParam))
-    : {};
+  const selectedTickets = useMemo(
+    () => (ticketsParam ? JSON.parse(decodeURIComponent(ticketsParam)) : {}),
+    [ticketsParam]
+  );
 
   // イベント情報をDBから取得
   const { event, loading: eventLoading, error: eventError, refetch } = useEvent(eventId || '');
@@ -33,7 +37,6 @@ function CheckoutContent() {
     isProcessing,
     error: paymentError,
     createPaymentIntent,
-    confirmPayment,
     clearError,
   } = usePayment();
 
@@ -42,13 +45,22 @@ function CheckoutContent() {
     firstName: "",
     lastName: "",
     phone: "",
-    cardNumber: "",
-    expiryDate: "",
-    cvv: "",
-    cardName: "",
   });
 
-  const tickets = event?.ticket_types || [];
+  // ログイン状態の場合、プロファイル情報から自動入力
+  useEffect(() => {
+    if (isAuthenticated && profile) {
+      const nameParts = profile.full_name?.split(" ") || [];
+      setFormData({
+        email: profile.email || "",
+        lastName: nameParts[0] || "",
+        firstName: nameParts[1] || "",
+        phone: "",
+      });
+    }
+  }, [isAuthenticated, profile]);
+
+  const tickets = useMemo(() => event?.ticket_types || [], [event?.ticket_types]);
 
   // チケット在庫確認関数
   const validateTicketAvailability = useCallback(async () => {
@@ -99,13 +111,8 @@ function CheckoutContent() {
     }
 
     // バリデーション
-    if (!formData.email || !formData.firstName || !formData.lastName) {
-      alert("お名前とメールアドレスは必須項目です");
-      return;
-    }
-
-    if (selectedPaymentMethod === "credit" && (!formData.cardNumber || !formData.expiryDate || !formData.cvv || !formData.cardName)) {
-      alert("クレジットカード情報を正しく入力してください");
+    if (!formData.email || !formData.firstName || !formData.lastName || !formData.phone) {
+      alert("すべての項目を入力してください");
       return;
     }
 
@@ -145,30 +152,19 @@ function CheckoutContent() {
         orderItems,
         customerInfo: formData,
         eventId,
+        ...(user?.id && { userId: user.id }),
       });
 
       if (result.success) {
         if (selectedPaymentMethod === "paypay" && result.redirectUrl) {
           // PayPay決済の場合はリダイレクト
           window.location.href = result.redirectUrl;
-        } else if (selectedPaymentMethod === "convenience") {
-          // コンビニ決済の場合は完了ページへ
-          router.push(`/purchase-complete?payment_intent=${result.paymentIntentId}&order_id=${result.orderId}&payment_method=convenience`);
+        } else if (result.redirectUrl) {
+          // Stripe Payment Linkの場合はStripeのホストページにリダイレクト
+          window.location.href = result.redirectUrl;
         } else {
-          // クレジットカード決済の場合は決済確認
-          const confirmOptions = isLoggedIn
-            ? {} // TODO: 認証機能実装後にuserIdを設定
-            : {
-                guestInfo: {
-                  name: `${formData.lastName} ${formData.firstName}`,
-                  email: formData.email,
-                  phone: formData.phone,
-                }
-              };
-          const confirmResult = await confirmPayment(result.paymentIntentId!, confirmOptions);
-          if (confirmResult.success) {
-            router.push(`/purchase-complete?payment_intent=${result.paymentIntentId}&order_id=${confirmResult.orderId}&payment_method=credit`);
-          }
+          // その他の場合（通常は発生しない）
+          router.push(`/purchase-complete?order_id=${result.orderId}&payment_method=${selectedPaymentMethod}`);
         }
       }
     } catch (error) {
@@ -178,7 +174,7 @@ function CheckoutContent() {
   };
 
   // ローディング表示
-  if (eventLoading) {
+  if (eventLoading || authLoading) {
     return <LoadingScreen />;
   }
 
@@ -280,7 +276,7 @@ function CheckoutContent() {
                   購入者情報
                 </h2>
 
-                {!isLoggedIn && (
+                {!isAuthenticated && (
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                     <div className="flex items-center justify-between">
                       <div>
@@ -291,12 +287,28 @@ function CheckoutContent() {
                           アカウントをお持ちの方はログインすると情報入力が簡単になります
                         </p>
                       </div>
-                      <button
-                        onClick={() => setIsLoggedIn(true)}
+                      <Link
+                        href="/login"
                         className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 whitespace-nowrap cursor-pointer"
                       >
                         ログイン
-                      </button>
+                      </Link>
+                    </div>
+                  </div>
+                )}
+
+                {isAuthenticated && (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                    <div className="flex items-center">
+                      <i className="ri-checkbox-circle-line text-green-600 mr-3"></i>
+                      <div>
+                        <h3 className="font-semibold text-green-900">
+                          ログイン済み
+                        </h3>
+                        <p className="text-sm text-green-700">
+                          {profile?.email || user?.email} でログイン中
+                        </p>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -414,71 +426,20 @@ function CheckoutContent() {
                   ))}
                 </div>
 
-                {selectedPaymentMethod === "credit" && (
-                  <div className="space-y-4 mb-8">
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      クレジットカード情報
-                    </h3>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        カード番号*
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.cardNumber}
-                        onChange={(e) =>
-                          handleInputChange("cardNumber", e.target.value)
-                        }
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="1234 5678 9012 3456"
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          有効期限*
-                        </label>
-                        <input
-                          type="text"
-                          value={formData.expiryDate}
-                          onChange={(e) =>
-                            handleInputChange("expiryDate", e.target.value)
-                          }
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder="MM/YY"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          セキュリティコード*
-                        </label>
-                        <input
-                          type="text"
-                          value={formData.cvv}
-                          onChange={(e) =>
-                            handleInputChange("cvv", e.target.value)
-                          }
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder="123"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        カード名義*
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.cardName}
-                        onChange={(e) =>
-                          handleInputChange("cardName", e.target.value)
-                        }
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="TARO TANAKA"
-                      />
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8">
+                  <div className="flex items-start">
+                    <i className="ri-information-line text-blue-600 mr-3 mt-1"></i>
+                    <div className="text-sm text-blue-800">
+                      <p className="font-semibold mb-1">決済について</p>
+                      <p>
+                        次のステップで「購入を確定する」をクリックすると、安全な決済ページに移動します。
+                        {selectedPaymentMethod === "credit" && "カード情報はStripeの安全なページで入力いただきます。"}
+                        {selectedPaymentMethod === "convenience" && "コンビニ決済用の支払い番号が発行されます。"}
+                        {selectedPaymentMethod === "paypay" && "PayPayアプリで決済を完了してください。"}
+                      </p>
                     </div>
                   </div>
-                )}
+                </div>
 
                 <div className="flex space-x-4">
                   <button
@@ -527,18 +488,17 @@ function CheckoutContent() {
                       決済方法
                     </h3>
                     <div className="bg-gray-50 rounded-lg p-4">
-                      <p>
-                        {
-                          paymentMethods.find(
-                            (m) => m.id === selectedPaymentMethod
-                          )?.name
-                        }
-                      </p>
-                      {selectedPaymentMethod === "credit" && (
-                        <p className="text-sm text-gray-600 mt-1">
-                          **** **** **** {formData.cardNumber.slice(-4)}
+                      <div className="flex items-center">
+                        <i className={`${paymentMethods.find((m) => m.id === selectedPaymentMethod)?.icon} text-xl mr-2`}></i>
+                        <p>
+                          {paymentMethods.find((m) => m.id === selectedPaymentMethod)?.name}
                         </p>
-                      )}
+                      </div>
+                      <p className="text-sm text-gray-600 mt-2">
+                        {selectedPaymentMethod === "credit" && "Stripeの安全な決済ページでカード情報を入力します"}
+                        {selectedPaymentMethod === "convenience" && "コンビニ決済用の支払い番号が発行されます"}
+                        {selectedPaymentMethod === "paypay" && "PayPayアプリで決済を完了します"}
+                      </p>
                     </div>
                   </div>
 

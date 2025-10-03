@@ -53,6 +53,8 @@ export interface Event {
   location: string;
   date_start: string;
   date_end: string;
+  time_start?: string | null;
+  venue?: string | null;
   image_url: string | null;
   is_published: boolean;
   max_capacity: number | null;
@@ -78,12 +80,13 @@ export interface TicketType {
 
 export interface Order {
   id: string;
-  user_id: string;
+  user_id: string | null;
   event_id: string;
   total_amount: number;
   status: "pending" | "paid" | "cancelled" | "refunded";
   payment_method: "credit_card" | "paypal" | "convenience_store" | null;
   payment_id: string | null;
+  custom_order_id: string | null;
   guest_info: GuestInfo | null;
   created_at: string;
   updated_at: string;
@@ -104,7 +107,7 @@ export interface Ticket {
   order_item_id: string;
   ticket_type_id: string;
   event_id: string;
-  user_id: string;
+  user_id: string | null;
   qr_code: string;
   status: "valid" | "used" | "cancelled";
   used_at: string | null;
@@ -120,6 +123,7 @@ export interface OrderWithItems extends Order {
   order_items: (OrderItem & {
     ticket_type: TicketType;
   })[];
+  event?: Event;
 }
 
 export interface TicketWithDetails extends Ticket {

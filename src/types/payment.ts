@@ -132,6 +132,7 @@ export interface UsePaymentActions {
     orderItems: OrderItem[];
     customerInfo: Partial<PaymentFormData>;
     eventId: string;
+    userId?: string;
   }) => Promise<PaymentResult>;
   confirmPayment: (
     paymentIntentId: string,

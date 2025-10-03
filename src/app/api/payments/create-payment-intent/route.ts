@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createPaymentIntent, handleStripeError } from "../../../../lib/stripe";
+import { createPaymentLink, handleStripeError } from "../../../../lib/stripe";
 import { createPayPayPayment } from "../../../../lib/paypay";
 import { eventAPI } from "../../../../lib/database";
 import type { PaymentMethod, OrderItem } from "../../../../types/payment";
@@ -14,6 +14,7 @@ export async function POST(request: NextRequest) {
       customerInfo,
       eventId,
       eventTitle,
+      userId,
     }: {
       amount: number;
       paymentMethod: PaymentMethod;
@@ -26,6 +27,7 @@ export async function POST(request: NextRequest) {
       };
       eventId: string;
       eventTitle: string;
+      userId?: string;
     } = body;
 
     // バリデーション
@@ -134,33 +136,74 @@ export async function POST(request: NextRequest) {
     } else {
       // Stripe決済の場合（クレジットカード・コンビニ決済）
       try {
-        const paymentIntent = await createPaymentIntent({
-          amount,
-          paymentMethod: paymentMethod === "convenience" ? "convenience" : "credit",
-          customerEmail: customerInfo.email,
+        // Payment Linkで使用するline_itemsを構築
+        const lineItems = orderItems.map(item => {
+          const ticketType = event.ticket_types?.find(tt => tt.id === item.ticketId);
+          if (!ticketType) {
+            throw new Error(`チケット種類が見つかりません: ${item.ticketId}`);
+          }
+
+          return {
+            priceData: {
+              productName: `${eventTitle} - ${ticketType.name}`,
+              currency: 'jpy',
+              unitAmount: ticketType.price,
+            },
+            quantity: item.quantity,
+          };
+        });
+
+        // システム手数料を追加
+        const systemFee = Math.floor(calculatedAmount * 0.05);
+        if (systemFee > 0) {
+          lineItems.push({
+            priceData: {
+              productName: 'システム手数料',
+              currency: 'jpy',
+              unitAmount: systemFee,
+            },
+            quantity: 1,
+          });
+        }
+
+        // リダイレクト先URLを構築（NEXT_PUBLIC_APP_URLまたはNEXT_PUBLIC_SITE_URLを使用）
+        const baseUrl = process.env['NEXT_PUBLIC_APP_URL'] ||
+                       process.env['NEXT_PUBLIC_SITE_URL'] ||
+                       'http://localhost:3000';
+
+        // カスタムorderIdをリダイレクトURLに含める
+        const afterCompletionUrl = `${baseUrl}/purchase-complete?payment_method=${paymentMethod}&order_id=${orderId}`;
+
+        // Payment Linkを作成
+        const paymentLink = await createPaymentLink({
+          lineItems,
           metadata: {
             orderId,
             eventId,
             eventTitle,
+            customerEmail: customerInfo.email,
             customerName: `${customerInfo.lastName} ${customerInfo.firstName}`,
             customerPhone: customerInfo.phone,
             orderItems: JSON.stringify(orderItems),
+            paymentMethod,
+            userId: userId || '',
           },
+          afterCompletionUrl,
         });
 
         return NextResponse.json({
           success: true,
-          paymentIntentId: paymentIntent.id,
-          clientSecret: paymentIntent.client_secret,
+          paymentLinkId: paymentLink.id,
+          paymentLinkUrl: paymentLink.url,
           orderId,
           paymentMethod,
         });
       } catch (error: unknown) {
-        console.error("Stripe payment intent creation error:", error);
+        console.error("Stripe payment link creation error:", error);
         const stripeError = handleStripeError(error);
-        
+
         return NextResponse.json(
-          { 
+          {
             success: false,
             error: {
               type: "payment_failed",
