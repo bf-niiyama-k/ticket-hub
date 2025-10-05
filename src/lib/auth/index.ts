@@ -3,8 +3,11 @@
  * Supabase公式ドキュメントのベストプラクティスに従って実装
  * @see https://supabase.com/docs/guides/auth/server-side/nextjs
  */
-import { supabase } from "@/lib/supabase";
+import { supabase as originalSupabase } from "@/lib/supabase";
 import type { AuthError, User } from "@supabase/supabase-js";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const supabase = originalSupabase as any;
 
 interface ProfileInsert {
   id: string;
@@ -77,7 +80,7 @@ export async function signInWithGoogle() {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: `${process.env['NEXT_PUBLIC_SITE_URL'] || window.location.origin}/auth/callback`,
+      redirectTo: `${process.env['NEXT_PUBLIC_APP_URL'] || window.location.origin}/auth/callback`,
       queryParams: {
         access_type: 'offline',
         prompt: 'consent',
@@ -191,7 +194,8 @@ export async function updateUserProfile(
 export function onAuthStateChange(callback: (user: User | null) => void) {
   const {
     data: { subscription },
-  } = supabase.auth.onAuthStateChange((_event, session) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
     callback(session?.user ?? null);
   });
 

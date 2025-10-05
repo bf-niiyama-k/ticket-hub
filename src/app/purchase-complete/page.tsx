@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Header from "../../components/layout/Header";
@@ -13,8 +13,59 @@ import { useOrder } from "@/hooks/useOrders";
 function PurchaseCompleteContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get('order_id') || searchParams.get('orderId');
+  const paymentMethod = searchParams.get('payment_method');
 
   const { order, tickets, loading, error } = useOrder(orderId);
+
+  // PayPay決済の場合、決済確認とチケット発行を実行
+  useEffect(() => {
+    if (paymentMethod === 'paypay' && orderId && !loading) {
+      // 確認済みフラグをチェック
+      const confirmationKey = `paypay_confirmed_${orderId}`;
+      const alreadyConfirmed = sessionStorage.getItem(confirmationKey);
+
+      if (alreadyConfirmed) {
+        console.log('PayPay payment already confirmed for this order');
+        return;
+      }
+
+      // orderがpendingの場合のみ確認処理を実行
+      if (order && order.status === 'pending') {
+        const confirmPayPayPayment = async () => {
+          try {
+            console.log('Confirming PayPay payment for order:', orderId);
+            const response = await fetch('/api/payments/confirm-payment', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                paymentIntentId: orderId,
+                paymentMethod: 'paypay',
+                orderId: orderId,
+              }),
+            });
+
+            const result = await response.json();
+
+            if (!result.success) {
+              console.error('PayPay payment confirmation failed:', result.error);
+            } else {
+              console.log('PayPay payment confirmed and tickets created');
+              // 確認済みフラグを設定
+              sessionStorage.setItem(confirmationKey, 'true');
+              // 注文情報を再取得するため、ページをリロード
+              setTimeout(() => window.location.reload(), 1000);
+            }
+          } catch (err) {
+            console.error('Failed to confirm PayPay payment:', err);
+          }
+        };
+
+        confirmPayPayPayment();
+      }
+    }
+  }, [paymentMethod, orderId, order, loading]);
 
   const handleDownloadTicket = () => {
     // チケットPDFダウンロードのシミュレーション（Phase 3で実装）

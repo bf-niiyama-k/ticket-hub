@@ -1,15 +1,18 @@
-import { supabase } from './supabase/client';
+import { supabase as originalSupabase } from './supabase/client';
 import type { Database } from './supabase/types';
-import type { 
-  Event, 
-  EventWithTicketTypes, 
-  TicketType, 
-  Order, 
-  OrderWithItems, 
-  Ticket, 
-  TicketWithDetails, 
-  Profile 
+import type {
+  Event,
+  EventWithTicketTypes,
+  TicketType,
+  Order,
+  OrderWithItems,
+  Ticket,
+  TicketWithDetails,
+  Profile
 } from './supabase/types';
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const supabase = originalSupabase as any;
 
 type EventInsert = Database['public']['Tables']['events']['Insert'];
 type EventUpdate = Database['public']['Tables']['events']['Update'];
@@ -472,7 +475,7 @@ export const analyticsAPI = {
       if (ticketsResult.error) throw new DatabaseError('チケット統計取得に失敗しました', ticketsResult.error);
       if (customersResult.error) throw new DatabaseError('顧客統計取得に失敗しました', customersResult.error);
 
-      const totalRevenue = revenueResult.data?.reduce((sum, order) => sum + order.total_amount, 0) || 0;
+      const totalRevenue = revenueResult.data?.reduce((sum: number, order: { total_amount: number }) => sum + order.total_amount, 0) || 0;
       const totalTickets = ticketsResult.count || 0;
       const totalCustomers = customersResult.count || 0;
       const avgOrderValue = revenueResult.data && revenueResult.data.length > 0 
@@ -506,12 +509,12 @@ export const analyticsAPI = {
       if (error) throw new DatabaseError('イベント別売上取得に失敗しました', error);
 
       const eventSales = new Map<string, { title: string; revenue: number; tickets: number }>();
-      
-      data?.forEach(order => {
+
+      data?.forEach((order: { event_id: string; events: unknown; total_amount: number; order_items?: { quantity: number }[] }) => {
         const eventId = order.event_id;
         const title = (order.events as unknown as Event)?.title || '';
         const revenue = order.total_amount;
-        const tickets = order.order_items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
+        const tickets = order.order_items?.reduce((sum: number, item: { quantity: number }) => sum + item.quantity, 0) || 0;
 
         if (eventSales.has(eventId)) {
           const existing = eventSales.get(eventId)!;

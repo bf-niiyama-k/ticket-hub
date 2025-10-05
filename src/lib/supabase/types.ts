@@ -19,7 +19,7 @@ export interface Database {
       orders: {
         Row: Order;
         Insert: Omit<Order, "id" | "created_at" | "updated_at">;
-        Update: Partial<Omit<Order, "id" | "created_at" | "updated_at">>;
+        Update: Partial<Pick<Order, "status" | "payment_method" | "payment_id" | "custom_order_id" | "guest_info" | "user_id" | "event_id" | "total_amount">>;
       };
       order_items: {
         Row: OrderItem;

@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import type { Ticket } from '@/types/database';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const typedSupabase = supabase as any;
+
 interface TicketWithDetails extends Ticket {
   event?: {
     id: string;
@@ -34,7 +37,7 @@ export function useTickets(orderId: string | null) {
         setLoading(true);
 
         // 注文IDに紐づく注文アイテムIDを取得
-        const { data: orderItems, error: orderItemsError } = await supabase
+        const { data: orderItems, error: orderItemsError } = await typedSupabase
           .from('order_items')
           .select('id')
           .eq('order_id', orderId);
@@ -46,10 +49,10 @@ export function useTickets(orderId: string | null) {
           return;
         }
 
-        const orderItemIds = orderItems.map(item => item.id);
+        const orderItemIds = orderItems.map((item: { id: string }) => item.id);
 
         // チケットとイベント情報を取得
-        const { data, error: fetchError } = await supabase
+        const { data, error: fetchError } = await typedSupabase
           .from('tickets')
           .select(`
             *,

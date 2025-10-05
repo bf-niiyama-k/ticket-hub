@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { createPaymentLink, handleStripeError } from "../../../../lib/stripe";
 import { createPayPayPayment } from "../../../../lib/paypay";
 import { eventAPI } from "../../../../lib/database";
+import { createAdminClient } from "../../../../lib/supabase/admin";
 import type { PaymentMethod, OrderItem } from "../../../../types/payment";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const supabase = createAdminClient() as any;
 
 export async function POST(request: NextRequest) {
   try {
@@ -106,16 +110,76 @@ export async function POST(request: NextRequest) {
 
     if (paymentMethod === "paypay") {
       // PayPay決済の場合
+      const baseUrl = process.env['NEXT_PUBLIC_APP_URL'] || 'http://localhost:3000';
+
       const result = await createPayPayPayment({
         amount,
         orderId,
         eventTitle,
         customerEmail: customerInfo.email,
         orderItems,
-        redirectUrl: `${process.env['NEXT_PUBLIC_BASE_URL']}/purchase-complete?payment_method=paypay&order_id=${orderId}`,
+        redirectUrl: `${baseUrl}/purchase-complete?payment_method=paypay&order_id=${orderId}`,
       });
 
       if (result.success && result.data) {
+        // PayPay決済の場合、事前に注文を作成（ステータス: pending）
+        try {
+          const orderData: Record<string, unknown> = {
+            user_id: userId || 'guest',
+            event_id: eventId,
+            total_amount: amount,
+            status: "pending", // 決済完了前なのでpendingステータス
+            payment_method: 'paypal', // PayPayの場合はpaypal
+            payment_id: result.data.paymentId || orderId,
+            custom_order_id: orderId, // カスタムIDを保存
+          };
+
+          // ゲストユーザーの場合のみguest_infoを設定
+          if (!userId && customerInfo) {
+            orderData['guest_info'] = {
+              name: `${customerInfo.lastName} ${customerInfo.firstName}`,
+              email: customerInfo.email,
+              phone: customerInfo.phone,
+            };
+          }
+
+          console.log("Creating PayPay order with data:", JSON.stringify(orderData, null, 2));
+
+          const { data: order, error: orderError } = await supabase
+            .from("orders")
+            .insert(orderData)
+            .select()
+            .single();
+
+          console.log("Order creation result:", order, "Error:", orderError);
+
+          if (orderError || !order) {
+            console.error("Failed to create order for PayPay:", orderError);
+            // エラーでも決済は進める（後でWebhookで処理可能）
+          } else {
+            // 注文明細を作成
+            for (const item of orderItems) {
+              const ticketType = event.ticket_types?.find(tt => tt.id === item.ticketId);
+              if (ticketType) {
+                await supabase
+                  .from("order_items")
+                  .insert({
+                    order_id: order.id,
+                    ticket_type_id: item.ticketId,
+                    quantity: item.quantity,
+                    unit_price: ticketType.price,
+                    total_price: ticketType.price * item.quantity,
+                  });
+              }
+            }
+
+            console.log("PayPay order created:", order.id, "custom_order_id:", orderId);
+          }
+        } catch (dbError) {
+          console.error("Failed to create order for PayPay:", dbError);
+          // エラーでも決済は進める（後でWebhookで処理可能）
+        }
+
         return NextResponse.json({
           success: true,
           paymentIntentId: result.data.paymentId,
@@ -126,7 +190,7 @@ export async function POST(request: NextRequest) {
         });
       } else {
         return NextResponse.json(
-          { 
+          {
             success: false,
             error: result.error || { type: "payment_failed", message: "PayPay決済の作成に失敗しました" }
           },
@@ -166,10 +230,8 @@ export async function POST(request: NextRequest) {
           });
         }
 
-        // リダイレクト先URLを構築（NEXT_PUBLIC_APP_URLまたはNEXT_PUBLIC_SITE_URLを使用）
-        const baseUrl = process.env['NEXT_PUBLIC_APP_URL'] ||
-                       process.env['NEXT_PUBLIC_SITE_URL'] ||
-                       'http://localhost:3000';
+        // リダイレクト先URLを構築
+        const baseUrl = process.env['NEXT_PUBLIC_APP_URL'] || 'http://localhost:3000';
 
         // カスタムorderIdをリダイレクトURLに含める
         const afterCompletionUrl = `${baseUrl}/purchase-complete?payment_method=${paymentMethod}&order_id=${orderId}`;

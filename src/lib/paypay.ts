@@ -8,25 +8,32 @@ import type {
 
 // PayPay SDK レスポンス型定義
 interface PayPaySDKResponse {
-  resultInfo: {
-    code: string;
-    message: string;
-    codeId: string;
-  };
-  data?: {
-    paymentId: string;
-    status: string;
-    acceptedAt?: number;
-    merchantPaymentId: string;
-    amount: {
-      amount: number;
-      currency: string;
+  STATUS: number;
+  BODY: {
+    resultInfo: {
+      code: string;
+      message: string;
+      codeId: string;
     };
-    links?: Array<{
-      rel: string;
-      href: string;
-      method: string;
-    }>;
+    data?: {
+      codeId?: string;
+      url?: string;
+      deeplink?: string;
+      expiryDate?: number;
+      paymentId?: string;
+      status?: string;
+      acceptedAt?: number;
+      merchantPaymentId: string;
+      amount: {
+        amount: number;
+        currency: string;
+      };
+      links?: Array<{
+        rel: string;
+        href: string;
+        method: string;
+      }>;
+    };
   };
 }
 
@@ -86,26 +93,46 @@ export const createPayPayPayment = async (params: {
     }
 
     // PayPay決済を作成
+    console.log("PayPay Request:", JSON.stringify(paymentRequest, null, 2));
     const response = await PAYPAY.QRCodeCreate(paymentRequest);
+    console.log("PayPay Response:", JSON.stringify(response, null, 2));
 
     const paypayResponse = response as unknown as PayPaySDKResponse;
-    if (paypayResponse && paypayResponse.resultInfo?.code === "SUCCESS") {
-      return {
-        success: true,
-        data: paypayResponse.data as PayPayPaymentResponse['data'],
-      };
-    } else {
-      const resultInfo = paypayResponse?.resultInfo || { code: 'UNKNOWN', message: 'Unknown error' };
-      return {
-        success: false,
-        error: {
-          type: "payment_failed",
-          message: resultInfo.message || "PayPay決済の作成に失敗しました",
-          code: resultInfo.code,
-          details: { resultInfo },
-        },
-      };
+    const resultInfo = paypayResponse?.BODY?.resultInfo;
+
+    if (paypayResponse && resultInfo?.code === "SUCCESS") {
+      // PayPay QRコード決済の場合、dataにはpaymentIdの代わりにcodeIdが含まれる
+      const responseData = paypayResponse.BODY.data;
+      if (responseData) {
+        // linksフォーマットに変換（フロントエンドとの互換性のため）
+        const links = [
+          { rel: "redirect", href: responseData.url || "", method: "GET" },
+          { rel: "qrcode", href: responseData.url || "", method: "GET" },
+        ];
+
+        return {
+          success: true,
+          data: {
+            paymentId: responseData.codeId || responseData.merchantPaymentId,
+            status: "CREATED",
+            merchantPaymentId: responseData.merchantPaymentId,
+            amount: responseData.amount,
+            links: links,
+          } as PayPayPaymentResponse['data'],
+        };
+      }
     }
+
+    console.error("PayPay Error Details:", JSON.stringify(paypayResponse, null, 2));
+    return {
+      success: false,
+      error: {
+        type: "payment_failed",
+        message: resultInfo?.message || "PayPay決済の作成に失敗しました",
+        code: resultInfo?.code || "UNKNOWN",
+        details: { resultInfo, fullResponse: paypayResponse },
+      },
+    };
   } catch (error: unknown) {
     console.error("PayPay payment creation error:", error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
@@ -126,7 +153,7 @@ export const getPayPayPaymentStatus = async (
 ): Promise<{
   success: boolean;
   status?: "CREATED" | "COMPLETED" | "FAILED" | "CANCELED";
-  data?: PayPaySDKResponse['data'];
+  data?: PayPaySDKResponse['BODY']['data'];
   error?: PaymentError;
 }> => {
   try {
@@ -135,21 +162,22 @@ export const getPayPayPaymentStatus = async (
     const response = await PAYPAY.GetPaymentDetails([merchantPaymentId]);
 
     const paypayResponse = response as unknown as PayPaySDKResponse;
-    if (paypayResponse && paypayResponse.resultInfo?.code === "SUCCESS") {
-      const responseData = paypayResponse.data;
+    const resultInfo = paypayResponse?.BODY?.resultInfo;
+
+    if (paypayResponse && resultInfo?.code === "SUCCESS") {
+      const responseData = paypayResponse.BODY.data;
       return {
         success: true,
         status: responseData?.status as "CREATED" | "COMPLETED" | "FAILED" | "CANCELED",
-        data: responseData as PayPaySDKResponse['data'],
+        data: responseData,
       };
     } else {
-      const resultInfo = paypayResponse?.resultInfo || { code: 'UNKNOWN', message: 'Unknown error' };
       return {
         success: false,
         error: {
           type: "payment_failed",
-          message: resultInfo.message || "PayPay決済ステータスの取得に失敗しました",
-          code: resultInfo.code,
+          message: resultInfo?.message || "PayPay決済ステータスの取得に失敗しました",
+          code: resultInfo?.code || "UNKNOWN",
         },
       };
     }
@@ -288,7 +316,7 @@ export const pollPayPayPaymentStatus = async (
 ): Promise<{
   success: boolean;
   status?: "CREATED" | "COMPLETED" | "FAILED" | "CANCELED";
-  data?: PayPaySDKResponse['data'];
+  data?: PayPaySDKResponse['BODY']['data'];
   error?: PaymentError;
 }> => {
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
