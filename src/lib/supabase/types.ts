@@ -19,7 +19,19 @@ export interface Database {
       orders: {
         Row: Order;
         Insert: Omit<Order, "id" | "created_at" | "updated_at">;
-        Update: Partial<Pick<Order, "status" | "payment_method" | "payment_id" | "custom_order_id" | "guest_info" | "user_id" | "event_id" | "total_amount">>;
+        Update: Partial<
+          Pick<
+            Order,
+            | "status"
+            | "payment_method"
+            | "payment_id"
+            | "custom_order_id"
+            | "guest_info"
+            | "user_id"
+            | "event_id"
+            | "total_amount"
+          >
+        >;
       };
       order_items: {
         Row: OrderItem;
@@ -42,6 +54,13 @@ export interface Profile {
   avatar_url: string | null;
   role: "customer" | "admin" | "staff";
   is_guest: boolean;
+  phone: string | null;
+  birth_date: string | null;
+  gender: "male" | "female" | "other" | "prefer-not-to-say" | null;
+  interests: string[];
+  notification_email: boolean;
+  notification_sms: boolean;
+  notification_push: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -84,7 +103,7 @@ export interface Order {
   event_id: string;
   total_amount: number;
   status: "pending" | "paid" | "cancelled" | "refunded";
-  payment_method: "credit_card" | "paypal" | "convenience_store" | null;
+  payment_method: "credit_card" | "paypay" | "convenience_store" | null;
   payment_id: string | null;
   custom_order_id: string | null;
   guest_info: GuestInfo | null;

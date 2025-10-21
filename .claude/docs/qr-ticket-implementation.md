@@ -1,7 +1,8 @@
 # QRコード・チケット表示システム実装ドキュメント
 
-**実装完了日**: 2025年9月11日  
-**対象タスク**: `task-qr-ticket-system.md`
+**実装完了日**: 2025年9月11日
+**最終更新日**: 2025年10月21日（スキャナー改善）
+**対象タスク**: `task-qr-ticket-system.md`, `task-qr-scanner-implementation.md`
 
 ## 実装概要
 
@@ -54,10 +55,27 @@ verifyQRSignature(qrData): boolean
 ### 4. QRコードスキャナー (`src/components/ticket/QRCodeScanner.tsx`)
 
 **技術構成**:
-- **ライブラリ**: html5-qrcode（モバイル対応）
+- **ライブラリ**: html5-qrcode（Html5QrcodeScanner使用、モバイル対応）
 - **機能**: リアルタイムスキャン + 手動入力対応
-- **カメラ制御**: 前面・背面カメラ切替、フラッシュ、ズーム対応
-- **バリデーション**: QRコード形式・署名・有効期限の3段階検証
+- **カメラ制御**: 背面カメラ優先、フラッシュ、ズーム対応
+- **バリデーション**: QRコード形式・署名・有効期限・ステータスの多段階検証
+- **エラーハンドリング**: カメラ権限エラーの詳細表示、手動入力への誘導
+
+**スキャナー設定**:
+```typescript
+{
+  fps: 0.5,  // 2秒に1回スキャン（重複防止・安定性向上）
+  qrbox: { width: 250, height: 250 },
+  aspectRatio: 1.0,
+  showTorchButtonIfSupported: true,      // フラッシュ対応
+  showZoomSliderIfSupported: true,       // ズーム対応
+  defaultZoomValueIfSupported: 2,
+  rememberLastUsedCamera: true,          // 前回のカメラを記憶
+  videoConstraints: {
+    facingMode: "environment"            // 背面カメラ優先
+  }
+}
+```
 
 **スキャン結果処理**:
 ```typescript
@@ -69,6 +87,12 @@ interface TicketScanResult {
   ticket?: Ticket;
 }
 ```
+
+**エラーハンドリング**:
+- カメラ権限エラー（Permission/NotAllowed/NotReadable）の検出・表示
+- NotFoundException（QRコード未検出）は無視（通常動作）
+- JSONパースエラーの事前回避（プレーンテキストQRコード対応）
+- エラー発生時の手動入力モードへの誘導
 
 ### 5. チケット検証API (`src/app/api/tickets/verify/route.ts`)
 
@@ -207,8 +231,12 @@ const config = {
 ### スキャン処理
 
 - Web Worker活用でメインスレッド非阻害
-- スキャン頻度の調整（10fps）
-- 無効スキャン結果の早期除外
+- スキャン頻度の最適化（0.5fps = 2秒に1回）
+  - 重複スキャン防止
+  - CPUリソースの節約
+  - バッテリー消費の削減
+- 無効スキャン結果の早期除外（NotFoundException等）
+- JSONパース前の事前チェックでエラー削減
 
 ## 運用考慮事項
 

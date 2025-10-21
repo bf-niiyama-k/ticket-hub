@@ -52,7 +52,7 @@ CREATE TABLE public.orders (
   event_id UUID REFERENCES public.events(id) ON DELETE CASCADE,
   total_amount DECIMAL(10,2) NOT NULL,
   status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'paid', 'cancelled', 'refunded')),
-  payment_method TEXT CHECK (payment_method IN ('credit_card', 'paypal', 'convenience_store')),
+  payment_method TEXT CHECK (payment_method IN ('credit_card', 'paypay', 'convenience_store')),
   payment_id TEXT,
   guest_info JSONB,
   created_at TIMESTAMPTZ DEFAULT NOW(),

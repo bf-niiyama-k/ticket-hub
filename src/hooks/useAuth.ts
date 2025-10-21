@@ -2,14 +2,20 @@
 
 import { useState, useEffect } from "react";
 import { User } from "@supabase/supabase-js";
-import { getCurrentUser, getUserProfile, onAuthStateChange, signOut as authSignOut } from "@/lib/auth";
+import {
+  getCurrentUser,
+  getUserProfile,
+  onAuthStateChange,
+  signOut as authSignOut,
+} from "@/lib/auth";
 
 interface Profile {
   id: string;
   email: string;
+  phone: string;
   full_name: string | null;
   avatar_url: string | null;
-  role: 'customer' | 'admin' | 'staff';
+  role: "customer" | "admin" | "staff";
   is_guest: boolean;
 }
 
@@ -30,7 +36,7 @@ export const useAuth = (): UseAuthReturn => {
 
   useEffect(() => {
     // クライアントサイドでのみ実行
-    if (typeof window === 'undefined') {
+    if (typeof window === "undefined") {
       setLoading(false);
       return;
     }
@@ -50,7 +56,8 @@ export const useAuth = (): UseAuthReturn => {
 
         // ユーザーがいる場合、プロファイル情報も取得
         if (currentUser) {
-          const { profile: userProfile, error: profileError } = await getUserProfile(currentUser.id);
+          const { profile: userProfile, error: profileError } =
+            await getUserProfile(currentUser.id);
 
           if (profileError) {
             console.error("プロファイル取得エラー:", profileError);
@@ -59,7 +66,9 @@ export const useAuth = (): UseAuthReturn => {
           }
         }
       } catch (err) {
-        setError(err instanceof Error ? err : new Error("認証エラーが発生しました"));
+        setError(
+          err instanceof Error ? err : new Error("認証エラーが発生しました")
+        );
       } finally {
         setLoading(false);
       }

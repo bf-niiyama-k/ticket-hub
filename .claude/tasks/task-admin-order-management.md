@@ -214,7 +214,7 @@ const stats = useMemo(() => {
         <td className="px-6 py-4 whitespace-nowrap">
           <div className="text-sm text-gray-900">
             {order.payment_method === 'credit_card' ? 'クレジットカード' :
-             order.payment_method === 'paypal' ? 'PayPay' :
+             order.payment_method === 'paypay' ? 'PayPay' :
              order.payment_method === 'convenience_store' ? 'コンビニ決済' :
              '-'}
           </div>
@@ -422,7 +422,7 @@ const filteredOrders = useMemo(() => {
             <p className="text-sm text-gray-600">決済方法</p>
             <p className="text-gray-900">
               {selectedOrder.payment_method === 'credit_card' ? 'クレジットカード' :
-               selectedOrder.payment_method === 'paypal' ? 'PayPay' :
+               selectedOrder.payment_method === 'paypay' ? 'PayPay' :
                'コンビニ決済'}
             </p>
           </div>
@@ -604,4 +604,59 @@ const handleRefund = async (orderId: string) => {
 ---
 
 ## 進捗メモ
-<!-- 作業進捗を随時更新 -->
+
+### ✅ 完了日: 2025-10-05
+
+#### 実装状況: 大部分完了
+
+**Phase 1: 注文一覧ページの実装** - ✅ 完了
+- ✅ `useOrders()` でDB取得
+- ✅ `useCustomers()` で顧客情報取得
+- ✅ `useEvents()` でイベント情報取得
+- ✅ ローディング・エラー状態実装
+- ✅ 注文一覧テーブル表示（`src/app/admin/orders/page.tsx`）
+- ⚠️ 統計カードは未実装（基本的な一覧表示のみ）
+
+**Phase 2: フィルタリング・検索機能** - ✅ 完了
+- ✅ ステータス別フィルタリング（すべて/支払済み/保留中/キャンセル/返金済み）
+- ⚠️ 検索機能は未実装
+
+**Phase 3: 注文詳細モーダル** - ✅ 完了
+- ✅ 注文詳細モーダルの表示
+- ✅ 注文情報、顧客情報、注文明細の表示
+
+**Phase 4: 返金処理** - ⚠️ 部分実装
+- ⚠️ 返金確認ダイアログあり（`page.tsx:54`）
+- ⚠️ 注文ステータス更新のみ（`page.tsx:56`）
+- ❌ Stripe Refund API呼び出しなし
+- ❌ チケットステータス更新なし
+- ❌ チケット在庫復元なし
+- ❌ `src/app/api/payments/refund/route.ts` 未作成
+
+**Phase 5: 検証** - ✅ 完了
+- ✅ 注文一覧が正しく表示
+- ✅ フィルタリングが正常に動作
+- ✅ TypeScript型エラー解消
+- ✅ ESLint警告解消
+- ✅ ビルドエラー解消
+
+#### 実装ファイル
+
+- `src/app/admin/orders/page.tsx` - 注文管理ページ（完全実装）
+- `src/hooks/useOrders.ts` - 注文取得フック
+- `src/hooks/useCustomers.ts` - 顧客取得フック
+
+#### 未実装・今後の改善点
+
+1. **統計カードの実装** - 🟡 中優先度
+   - 総注文数、総売上、今日の注文数、今日の売上の表示
+
+2. **検索機能の実装** - 🟡 中優先度
+   - 注文ID、顧客名、メールアドレスでの検索
+
+3. **返金処理の完全実装** - 🔴 高優先度
+   - `src/app/api/payments/refund/route.ts` の作成
+   - Stripe Refund APIの呼び出し
+   - チケットステータスの更新（cancelled）
+   - チケット在庫の復元
+   - トランザクション処理の実装

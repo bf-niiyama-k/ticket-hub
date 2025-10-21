@@ -4,3 +4,4 @@ export { useCustomers, useProfile } from './useCustomers';
 export { useAnalytics } from './useAnalytics';
 export { useAuth } from './useAuth';
 export { usePayment } from './usePayment';
+export { useMyProfile } from './useMyProfile';

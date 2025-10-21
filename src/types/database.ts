@@ -10,10 +10,10 @@ export type {
   OrderWithItems,
   Ticket,
   TicketWithDetails,
-  GuestInfo
-} from '../lib/supabase/types';
+  GuestInfo,
+} from "../lib/supabase/types";
 
-import type { Profile, OrderWithItems } from '../lib/supabase/types';
+import type { Profile, OrderWithItems } from "../lib/supabase/types";
 
 // Additional application-specific types
 export interface EventFormData {
@@ -80,7 +80,7 @@ export interface EventFilters {
 }
 
 export interface OrderFilters {
-  status?: 'pending' | 'paid' | 'cancelled' | 'refunded';
+  status?: "pending" | "paid" | "cancelled" | "refunded";
   dateStart?: string;
   dateEnd?: string;
   eventId?: string;
@@ -88,7 +88,7 @@ export interface OrderFilters {
 
 export interface CustomerFilters {
   search?: string;
-  status?: 'active' | 'inactive';
+  status?: "active" | "inactive";
   registeredStart?: string;
   registeredEnd?: string;
 }
@@ -141,11 +141,11 @@ export interface DatabaseErrorInfo {
 }
 
 // Status types
-export type EventStatus = 'draft' | 'published';
-export type OrderStatus = 'pending' | 'paid' | 'cancelled' | 'refunded';
-export type TicketStatus = 'valid' | 'used' | 'cancelled';
-export type PaymentMethod = 'credit_card' | 'paypal' | 'convenience_store';
-export type UserRole = 'customer' | 'admin' | 'staff';
+export type EventStatus = "draft" | "published";
+export type OrderStatus = "pending" | "paid" | "cancelled" | "refunded";
+export type TicketStatus = "valid" | "used" | "cancelled";
+export type PaymentMethod = "credit_card" | "paypay" | "convenience_store";
+export type UserRole = "customer" | "admin" | "staff";
 
 // UI Component data types (matching existing components)
 export interface EventCardData {
@@ -167,7 +167,7 @@ export interface CustomerTableData {
   totalPurchases: number;
   totalSpent: number;
   lastLogin: string;
-  status: 'active' | 'inactive';
+  status: "active" | "inactive";
 }
 
 export interface OrderTableData {
@@ -235,7 +235,7 @@ export interface FormState<T> {
 // Modal state types
 export interface ModalState {
   isOpen: boolean;
-  type: 'create' | 'edit' | 'delete' | 'view';
+  type: "create" | "edit" | "delete" | "view";
   data?: unknown;
 }
 
@@ -244,7 +244,7 @@ export interface SearchState {
   query: string;
   filters: Record<string, unknown>;
   sortBy: string;
-  sortOrder: 'asc' | 'desc';
+  sortOrder: "asc" | "desc";
 }
 
 export interface PaginationState {
@@ -262,7 +262,7 @@ export interface DateRange {
 // Notification types
 export interface Notification {
   id: string;
-  type: 'success' | 'error' | 'warning' | 'info';
+  type: "success" | "error" | "warning" | "info";
   title: string;
   message: string;
   duration?: number;

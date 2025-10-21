@@ -82,17 +82,24 @@ export function encodeQRData(qrData: QRTicketData): string {
  * QRコードのデータをデコード・検証
  */
 export function decodeQRData(qrString: string): QRTicketData | null {
+  // まずJSON形式かチェック（パフォーマンス最適化）
+  if (!qrString.startsWith('{') && !qrString.startsWith('[')) {
+    // JSON形式ではない（プレーンテキストのチケットID）
+    return null;
+  }
+
   try {
     const data = JSON.parse(qrString) as QRTicketData;
-    
+
     // データ形式の検証
     if (!data.ticketId || !data.eventId || !data.userId || !data.timestamp || !data.signature) {
       return null;
     }
-    
+
     return data;
-  } catch (error) {
-    console.error('QR code decode error:', error);
+  } catch {
+    // JSON.parse失敗 = プレーンテキスト形式のQRコード
+    // エラーログは不要（通常の動作）
     return null;
   }
 }

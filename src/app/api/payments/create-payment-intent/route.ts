@@ -37,14 +37,27 @@ export async function POST(request: NextRequest) {
     // バリデーション
     if (!amount || amount <= 0) {
       return NextResponse.json(
-        { error: { type: "validation_error", message: "有効な金額を入力してください" } },
+        {
+          error: {
+            type: "validation_error",
+            message: "有効な金額を入力してください",
+          },
+        },
         { status: 400 }
       );
     }
 
-    if (!paymentMethod || !["credit", "paypay", "convenience"].includes(paymentMethod)) {
+    if (
+      !paymentMethod ||
+      !["credit", "paypay", "convenience"].includes(paymentMethod)
+    ) {
       return NextResponse.json(
-        { error: { type: "validation_error", message: "有効な決済方法を選択してください" } },
+        {
+          error: {
+            type: "validation_error",
+            message: "有効な決済方法を選択してください",
+          },
+        },
         { status: 400 }
       );
     }
@@ -58,7 +71,12 @@ export async function POST(request: NextRequest) {
 
     if (!customerInfo?.email) {
       return NextResponse.json(
-        { error: { type: "validation_error", message: "メールアドレスが必要です" } },
+        {
+          error: {
+            type: "validation_error",
+            message: "メールアドレスが必要です",
+          },
+        },
         { status: 400 }
       );
     }
@@ -67,7 +85,12 @@ export async function POST(request: NextRequest) {
     const event = await eventAPI.getEventById(eventId);
     if (!event) {
       return NextResponse.json(
-        { error: { type: "validation_error", message: "イベントが見つかりません" } },
+        {
+          error: {
+            type: "validation_error",
+            message: "イベントが見つかりません",
+          },
+        },
         { status: 404 }
       );
     }
@@ -75,18 +98,31 @@ export async function POST(request: NextRequest) {
     // チケット在庫確認と金額計算
     let calculatedAmount = 0;
     for (const item of orderItems) {
-      const ticketType = event.ticket_types?.find(tt => tt.id === item.ticketId);
+      const ticketType = event.ticket_types?.find(
+        (tt) => tt.id === item.ticketId
+      );
       if (!ticketType) {
         return NextResponse.json(
-          { error: { type: "validation_error", message: `チケット種類が見つかりません: ${item.ticketId}` } },
+          {
+            error: {
+              type: "validation_error",
+              message: `チケット種類が見つかりません: ${item.ticketId}`,
+            },
+          },
           { status: 400 }
         );
       }
 
-      const availableStock = ticketType.quantity_total - ticketType.quantity_sold;
+      const availableStock =
+        ticketType.quantity_total - ticketType.quantity_sold;
       if (availableStock < item.quantity) {
         return NextResponse.json(
-          { error: { type: "validation_error", message: `${ticketType.name}の在庫が不足しています（残り${availableStock}枚）` } },
+          {
+            error: {
+              type: "validation_error",
+              message: `${ticketType.name}の在庫が不足しています（残り${availableStock}枚）`,
+            },
+          },
           { status: 400 }
         );
       }
@@ -106,11 +142,14 @@ export async function POST(request: NextRequest) {
     }
 
     // 注文IDを生成
-    const orderId = `ORDER-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const orderId = `ORDER-${Date.now()}-${Math.random()
+      .toString(36)
+      .substr(2, 9)}`;
 
     if (paymentMethod === "paypay") {
       // PayPay決済の場合
-      const baseUrl = process.env['NEXT_PUBLIC_APP_URL'] || 'http://localhost:3000';
+      const baseUrl =
+        process.env["NEXT_PUBLIC_APP_URL"] || "http://localhost:3000";
 
       const result = await createPayPayPayment({
         amount,
@@ -125,25 +164,28 @@ export async function POST(request: NextRequest) {
         // PayPay決済の場合、事前に注文を作成（ステータス: pending）
         try {
           const orderData: Record<string, unknown> = {
-            user_id: userId || 'guest',
+            user_id: userId || "guest",
             event_id: eventId,
             total_amount: amount,
             status: "pending", // 決済完了前なのでpendingステータス
-            payment_method: 'paypal', // PayPayの場合はpaypal
+            payment_method: "paypay", // PayPayの場合はpaypay
             payment_id: result.data.paymentId || orderId,
             custom_order_id: orderId, // カスタムIDを保存
           };
 
           // ゲストユーザーの場合のみguest_infoを設定
           if (!userId && customerInfo) {
-            orderData['guest_info'] = {
+            orderData["guest_info"] = {
               name: `${customerInfo.lastName} ${customerInfo.firstName}`,
               email: customerInfo.email,
               phone: customerInfo.phone,
             };
           }
 
-          console.log("Creating PayPay order with data:", JSON.stringify(orderData, null, 2));
+          console.log(
+            "Creating PayPay order with data:",
+            JSON.stringify(orderData, null, 2)
+          );
 
           const { data: order, error: orderError } = await supabase
             .from("orders")
@@ -159,21 +201,26 @@ export async function POST(request: NextRequest) {
           } else {
             // 注文明細を作成
             for (const item of orderItems) {
-              const ticketType = event.ticket_types?.find(tt => tt.id === item.ticketId);
+              const ticketType = event.ticket_types?.find(
+                (tt) => tt.id === item.ticketId
+              );
               if (ticketType) {
-                await supabase
-                  .from("order_items")
-                  .insert({
-                    order_id: order.id,
-                    ticket_type_id: item.ticketId,
-                    quantity: item.quantity,
-                    unit_price: ticketType.price,
-                    total_price: ticketType.price * item.quantity,
-                  });
+                await supabase.from("order_items").insert({
+                  order_id: order.id,
+                  ticket_type_id: item.ticketId,
+                  quantity: item.quantity,
+                  unit_price: ticketType.price,
+                  total_price: ticketType.price * item.quantity,
+                });
               }
             }
 
-            console.log("PayPay order created:", order.id, "custom_order_id:", orderId);
+            console.log(
+              "PayPay order created:",
+              order.id,
+              "custom_order_id:",
+              orderId
+            );
           }
         } catch (dbError) {
           console.error("Failed to create order for PayPay:", dbError);
@@ -185,14 +232,20 @@ export async function POST(request: NextRequest) {
           paymentIntentId: result.data.paymentId,
           orderId,
           paymentMethod: "paypay",
-          redirectUrl: result.data.links?.find(link => link.rel === "redirect")?.href,
-          qrCodeUrl: result.data.links?.find(link => link.rel === "qrcode")?.href,
+          redirectUrl: result.data.links?.find(
+            (link) => link.rel === "redirect"
+          )?.href,
+          qrCodeUrl: result.data.links?.find((link) => link.rel === "qrcode")
+            ?.href,
         });
       } else {
         return NextResponse.json(
           {
             success: false,
-            error: result.error || { type: "payment_failed", message: "PayPay決済の作成に失敗しました" }
+            error: result.error || {
+              type: "payment_failed",
+              message: "PayPay決済の作成に失敗しました",
+            },
           },
           { status: 400 }
         );
@@ -201,8 +254,10 @@ export async function POST(request: NextRequest) {
       // Stripe決済の場合（クレジットカード・コンビニ決済）
       try {
         // Payment Linkで使用するline_itemsを構築
-        const lineItems = orderItems.map(item => {
-          const ticketType = event.ticket_types?.find(tt => tt.id === item.ticketId);
+        const lineItems = orderItems.map((item) => {
+          const ticketType = event.ticket_types?.find(
+            (tt) => tt.id === item.ticketId
+          );
           if (!ticketType) {
             throw new Error(`チケット種類が見つかりません: ${item.ticketId}`);
           }
@@ -210,7 +265,7 @@ export async function POST(request: NextRequest) {
           return {
             priceData: {
               productName: `${eventTitle} - ${ticketType.name}`,
-              currency: 'jpy',
+              currency: "jpy",
               unitAmount: ticketType.price,
             },
             quantity: item.quantity,
@@ -222,8 +277,8 @@ export async function POST(request: NextRequest) {
         if (systemFee > 0) {
           lineItems.push({
             priceData: {
-              productName: 'システム手数料',
-              currency: 'jpy',
+              productName: "システム手数料",
+              currency: "jpy",
               unitAmount: systemFee,
             },
             quantity: 1,
@@ -231,7 +286,8 @@ export async function POST(request: NextRequest) {
         }
 
         // リダイレクト先URLを構築
-        const baseUrl = process.env['NEXT_PUBLIC_APP_URL'] || 'http://localhost:3000';
+        const baseUrl =
+          process.env["NEXT_PUBLIC_APP_URL"] || "http://localhost:3000";
 
         // カスタムorderIdをリダイレクトURLに含める
         const afterCompletionUrl = `${baseUrl}/purchase-complete?payment_method=${paymentMethod}&order_id=${orderId}`;
@@ -248,7 +304,7 @@ export async function POST(request: NextRequest) {
             customerPhone: customerInfo.phone,
             orderItems: JSON.stringify(orderItems),
             paymentMethod,
-            userId: userId || '',
+            userId: userId || "",
           },
           afterCompletionUrl,
         });
@@ -271,7 +327,7 @@ export async function POST(request: NextRequest) {
               type: "payment_failed",
               message: stripeError.message,
               code: stripeError.code,
-            }
+            },
           },
           { status: 400 }
         );
@@ -279,7 +335,7 @@ export async function POST(request: NextRequest) {
     }
   } catch (error: unknown) {
     console.error("Payment intent creation error:", error);
-    
+
     return NextResponse.json(
       {
         success: false,

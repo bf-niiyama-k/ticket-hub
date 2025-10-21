@@ -72,20 +72,116 @@
 
 ## 未完了の重要タスク
 
-### 🟡 高優先度
-- [ ] **task-db-frontend-integration-remaining.md** - DB・フロントエンド統合の残作業
-  - 購入完了ページのDB連携（注文情報・チケット情報取得、実際のQRコード表示）
-  - マイチケットページのDB連携（ユーザーのチケット一覧取得）
-  - QRコード生成・PDF生成の実装
-  - **優先理由**: 決済フローの完結に必要。現在ハードコーディングされており実際のデータを表示できない。
+### 🔴 最高優先度（機能未完了）
 
-### 🟠 中優先度（機能追加・改善）
-- [ ] **カテゴリ機能の追加** - イベントカテゴリのDB追加とフィルター実装
-- [ ] **Stripe Elementsの完全統合** - クレジットカード入力UIの改善
-- [ ] **トランザクション処理の強化** - エラー時のロールバック機能
-- [ ] **ゲストユーザーテーブルの実装** - 現在'guest'文字列で対応している部分の改善
+1. **プロフィールページの完全実装**
+   - **ファイル**: `src/app/profile/page.tsx`
+   - **状態**: 完全にハードコーディング、DB未連携
+   - **必要な実装**:
+     - `useAuth()` で実ユーザー情報取得
+     - Supabase `profiles` テーブル連携
+     - プロフィール更新API実装
+     - バリデーション追加
+
+2. **QRスキャナーの完全実装** (`task-qr-scanner-implementation.md`)
+   - **ファイル**: `src/app/admin/scanner/page.tsx`
+   - **状態**: 基本構造のみ、実際のQRスキャン機能未実装
+   - **必要な実装**:
+     - `html5-qrcode` ライブラリのインストール
+     - カメラアクセス・QRスキャン機能
+     - `ticketAPI.getTicketByQR()` 実装
+     - チケット検証・使用処理
+
+3. **返金処理の完全実装** (`task-admin-order-management.md`)
+   - **ファイル**: `src/app/admin/orders/page.tsx`、新規API
+   - **状態**: 注文ステータス更新のみ、Stripe API未統合
+   - **必要な実装**:
+     - `src/app/api/payments/refund/route.ts` 作成
+     - Stripe Refund API呼び出し
+     - チケットステータス更新（cancelled）
+     - チケット在庫復元
+
+4. **PDFダウンロード機能の実装** (`task-my-tickets-implementation.md`)
+   - **ファイル**: `src/app/my-tickets/page.tsx`、`src/app/purchase-complete/page.tsx`
+   - **状態**: `alert('Phase 3で実装予定')` で未実装
+   - **必要な実装**:
+     - `jspdf`, `html2canvas` インストール
+     - チケットPDF生成機能（QRコード含む）
+
+### 🟡 中優先度（機能追加・改善）
+
+1. **利用規約同意チェックのバリデーション**
+   - **ファイル**: `src/app/checkout/page.tsx:368`
+   - チェックボックスのバリデーション追加
+
+2. **統計カードの実装** (`task-admin-order-management.md`)
+   - 総注文数、総売上、今日の注文・売上の表示
+
+3. **売上分析のDB連携**
+   - **ファイル**: `src/app/admin/analytics/page.tsx:20-81`
+   - ダミーデータの削除、実データ連携
+
+4. **カテゴリ機能の追加**
+   - DBスキーマに `events.category` カラム追加
+   - フィルタリング実装
+
+5. **イベント並び替え機能の実装**
+   - **ファイル**: `src/app/events/page.tsx:40-52`
+   - UIは実装済み、ロジック未実装
+
+6. **検索機能の実装** (`task-admin-order-management.md`)
+   - 注文ID、顧客名、メールアドレス検索
+
+### 🟢 低優先度（品質向上）
+
+1. **型安全性の改善**
+   - `src/lib/auth/index.ts:28` の `any` 型修正
+   - その他 `any` 型の削減
+
+2. **デバッグログの環境別制御**
+   - 20+箇所の `console.log()` を環境別に制御
+
+3. **アクセシビリティの改善**
+   - aria属性の追加
+   - キーボードナビゲーション
+
+4. **エラーハンドリングの強化**
+   - リトライ機能
+   - より詳細なエラーメッセージ
+
+---
+
+## 完了済みタスク（2025年10月5日精査）
+
+### ✅ フロントエンド・DB統合
+- ✅ **task-db-frontend-integration-remaining.md** - Phase 0-2完了
+  - ✅ 管理画面イベント詳細ページDB連携
+  - ✅ 購入完了ページDB連携（QRコード表示含む）
+  - ✅ マイチケットページDB連携（認証統合済み）
+  - ⚠️ PDFダウンロード機能のみ未実装
+
+### ✅ マイチケットページ
+- ✅ **task-my-tickets-implementation.md** - 完了
+  - ✅ DB連携（`useUserTickets`）
+  - ✅ 認証統合（`useAuth`）
+  - ✅ QRコード表示機能
+  - ✅ フィルタリング機能
+  - ⚠️ PDFダウンロードのみ未実装
+
+### ⚠️ 管理画面注文管理
+- ⚠️ **task-admin-order-management.md** - 大部分完了
+  - ✅ 注文一覧・詳細表示
+  - ✅ フィルタリング
+  - ⚠️ 統計カード未実装
+  - ⚠️ 検索機能未実装
+  - ❌ 返金処理（Stripe API）未実装
+
+### ⚠️ QRスキャナー
+- ⚠️ **task-qr-scanner-implementation.md** - 基本構造のみ
+  - ✅ ページ・コンポーネント作成
+  - ❌ 実際のQRスキャン機能未実装
 
 ---
 
 ## 進捗更新日
-2025年9月30日
+2025年10月5日（実装状況の完全精査完了）

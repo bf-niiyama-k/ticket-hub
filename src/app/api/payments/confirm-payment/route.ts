@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { confirmPaymentIntent, retrievePaymentIntent, handleStripeError } from "../../../../lib/stripe";
+import {
+  confirmPaymentIntent,
+  retrievePaymentIntent,
+  handleStripeError,
+} from "../../../../lib/stripe";
 import { getPayPayPaymentStatus } from "../../../../lib/paypay";
 import { createAdminClient } from "../../../../lib/supabase/admin";
 import { orderAPI } from "../../../../lib/database";
@@ -31,7 +35,12 @@ export async function POST(request: NextRequest) {
 
     if (!paymentIntentId) {
       return NextResponse.json(
-        { error: { type: "validation_error", message: "Payment Intent IDが必要です" } },
+        {
+          error: {
+            type: "validation_error",
+            message: "Payment Intent IDが必要です",
+          },
+        },
         { status: 400 }
       );
     }
@@ -43,7 +52,9 @@ export async function POST(request: NextRequest) {
     if (paymentMethod === "paypay") {
       if (!orderId) {
         return NextResponse.json(
-          { error: { type: "validation_error", message: "Order IDが必要です" } },
+          {
+            error: { type: "validation_error", message: "Order IDが必要です" },
+          },
           { status: 400 }
         );
       }
@@ -58,7 +69,10 @@ export async function POST(request: NextRequest) {
           success: false,
           error: {
             type: "payment_failed",
-            message: result.status === "CANCELED" ? "決済がキャンセルされました" : "決済に失敗しました",
+            message:
+              result.status === "CANCELED"
+                ? "決済がキャンセルされました"
+                : "決済に失敗しました",
           },
         });
       } else {
@@ -83,7 +97,10 @@ export async function POST(request: NextRequest) {
 
           if (confirmedPayment.status === "succeeded") {
             paymentStatus = "succeeded";
-            paymentMetadata = confirmedPayment.metadata as Record<string, string>;
+            paymentMetadata = confirmedPayment.metadata as Record<
+              string,
+              string
+            >;
           } else {
             paymentStatus = "failed";
             return NextResponse.json({
@@ -133,27 +150,37 @@ export async function POST(request: NextRequest) {
           console.log("Searching for order with custom_order_id:", orderId);
           const { data: existingOrders, error: searchError } = await supabase
             .from("orders")
-            .select(`
+            .select(
+              `
               *,
               order_items(
                 *,
                 ticket_type:ticket_types(*)
               )
-            `)
+            `
+            )
             .eq("custom_order_id", orderId)
             .single();
 
-          console.log("Order search result:", existingOrders, "Error:", searchError);
+          console.log(
+            "Order search result:",
+            existingOrders,
+            "Error:",
+            searchError
+          );
 
           if (!existingOrders) {
-            return NextResponse.json({
-              success: false,
-              error: {
-                type: "validation_error",
-                message: "注文が見つかりません",
-                details: { orderId, searchError },
+            return NextResponse.json(
+              {
+                success: false,
+                error: {
+                  type: "validation_error",
+                  message: "注文が見つかりません",
+                  details: { orderId, searchError },
+                },
               },
-            }, { status: 404 });
+              { status: 404 }
+            );
           }
 
           // 注文ステータスを更新
@@ -170,9 +197,9 @@ export async function POST(request: NextRequest) {
           orderItemsData = existingOrders.order_items;
         } else {
           // Stripeの場合：メタデータから注文情報を取得して新規作成
-          const eventId = paymentMetadata['eventId'];
-          const orderItems = JSON.parse(paymentMetadata['orderItems'] || "[]");
-          const totalAmount = parseInt(paymentMetadata['amount'] || "0", 10);
+          const eventId = paymentMetadata["eventId"];
+          const orderItems = JSON.parse(paymentMetadata["orderItems"] || "[]");
+          const totalAmount = parseInt(paymentMetadata["amount"] || "0", 10);
 
           if (!eventId || !orderItems || orderItems.length === 0) {
             return NextResponse.json({
@@ -186,13 +213,20 @@ export async function POST(request: NextRequest) {
 
           // 注文作成
           order = await orderAPI.createOrder({
-            user_id: userId || 'guest', // TODO: ゲストユーザーの処理を後で改善
+            user_id: userId || "guest", // TODO: ゲストユーザーの処理を後で改善
             event_id: eventId,
             total_amount: totalAmount,
             status: "paid",
-            payment_method: paymentMethod === 'credit' ? 'credit_card' : paymentMethod === 'paypay' ? 'paypal' : 'convenience_store',
+            payment_method:
+              paymentMethod === "credit"
+                ? "credit_card"
+                : paymentMethod === "paypay"
+                ? "paypay"
+                : "convenience_store",
             payment_id: paymentIntentId,
-            guest_info: guestInfo ? guestInfo as unknown as Record<string, unknown> : null,
+            guest_info: guestInfo
+              ? (guestInfo as unknown as Record<string, unknown>)
+              : null,
           } as Parameters<typeof orderAPI.createOrder>[0]);
 
           // 注文明細を作成
@@ -212,24 +246,24 @@ export async function POST(request: NextRequest) {
             }
 
             // 注文明細作成
-            await supabase
-              .from("order_items")
-              .insert({
-                order_id: order.id,
-                ticket_type_id: ticketId,
-                quantity: quantity,
-                unit_price: ticketType.price,
-                total_price: ticketType.price * quantity,
-              });
+            await supabase.from("order_items").insert({
+              order_id: order.id,
+              ticket_type_id: ticketId,
+              quantity: quantity,
+              unit_price: ticketType.price,
+              total_price: ticketType.price * quantity,
+            });
           }
 
           // 注文明細を取得
           const { data: createdOrderItems } = await supabase
             .from("order_items")
-            .select(`
+            .select(
+              `
               *,
               ticket_type:ticket_types(*)
-            `)
+            `
+            )
             .eq("order_id", order.id);
 
           orderItemsData = createdOrderItems || [];
@@ -291,7 +325,8 @@ export async function POST(request: NextRequest) {
             error: {
               type: "database_error",
               message: "注文の作成に失敗しました",
-              details: dbError instanceof Error ? dbError.message : String(dbError),
+              details:
+                dbError instanceof Error ? dbError.message : String(dbError),
             },
           },
           { status: 500 }

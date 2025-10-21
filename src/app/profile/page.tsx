@@ -1,30 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Header from "../../components/layout/Header";
 import Footer from "../../components/layout/Footer";
+import LoadingScreen from "../../components/shared/LoadingScreen";
+import ErrorScreen from "../../components/shared/ErrorScreen";
+import { useMyProfile } from "@/hooks/useMyProfile";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function ProfilePage() {
+  const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
+  const { profile, loading, error, updateProfile } = useMyProfile();
+
   const [activeTab, setActiveTab] = useState("profile");
   const [isEditing, setIsEditing] = useState(false);
-  const [profileData, setProfileData] = useState({
-    firstName: "太郎",
-    lastName: "田中",
-    email: "tanaka@example.com",
-    phone: "090-1234-5678",
-    birthDate: "1990-01-01",
-    gender: "male",
-    interests: ["exhibition", "conference", "dining"],
-    notifications: {
-      email: true,
-      sms: false,
-      push: true,
-    },
-    privacy: {
-      profilePublic: false,
-      emailVisible: false,
-    },
+  const [isSaving, setIsSaving] = useState(false);
+
+  // フォームの状態
+  const [formData, setFormData] = useState({
+    full_name: "",
+    phone: "",
+    birth_date: "",
+    gender: "prefer-not-to-say" as "male" | "female" | "other" | "prefer-not-to-say",
+    interests: [] as string[],
+    notification_email: true,
+    notification_sms: false,
+    notification_push: true,
   });
 
   const [securityData, setSecurityData] = useState({
@@ -32,6 +36,29 @@ export default function ProfilePage() {
     newPassword: "",
     confirmPassword: "",
   });
+
+  // profileが読み込まれたらformDataを更新
+  useEffect(() => {
+    if (profile) {
+      setFormData({
+        full_name: profile.full_name || "",
+        phone: profile.phone || "",
+        birth_date: profile.birth_date || "",
+        gender: profile.gender || "prefer-not-to-say",
+        interests: profile.interests || [],
+        notification_email: profile.notification_email,
+        notification_sms: profile.notification_sms,
+        notification_push: profile.notification_push,
+      });
+    }
+  }, [profile]);
+
+  // 認証チェック
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, authLoading, router]);
 
   const interestOptions = [
     { id: "exhibition", name: "展示会・見本市", icon: "ri-building-line" },
@@ -50,12 +77,12 @@ export default function ProfilePage() {
     { id: "art", name: "アート・文化", icon: "ri-palette-line" },
   ];
 
-  const handleProfileUpdate = (field: string, value: string | string[] | object) => {
-    setProfileData((prev) => ({ ...prev, [field]: value }));
+  const handleFormUpdate = (field: string, value: string | string[] | boolean) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleInterestToggle = (interestId: string) => {
-    setProfileData((prev) => ({
+    setFormData((prev) => ({
       ...prev,
       interests: prev.interests.includes(interestId)
         ? prev.interests.filter((id) => id !== interestId)
@@ -63,19 +90,51 @@ export default function ProfilePage() {
     }));
   };
 
-  const handleSaveProfile = () => {
-    setIsEditing(false);
-    alert("プロフィールを更新しました（シミュレーション）");
+  const handleSaveProfile = async () => {
+    try {
+      setIsSaving(true);
+      await updateProfile(formData);
+      setIsEditing(false);
+      alert("プロフィールを更新しました");
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'プロフィールの更新に失敗しました');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handlePasswordChange = (e: React.FormEvent) => {
+  const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert("パスワードを変更しました（シミュレーション）");
-    setSecurityData({
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    });
+
+    if (securityData.newPassword !== securityData.confirmPassword) {
+      alert("新しいパスワードが一致しません");
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/profile/password', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          currentPassword: securityData.currentPassword,
+          newPassword: securityData.newPassword,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'パスワードの変更に失敗しました');
+      }
+
+      alert("パスワードを変更しました");
+      setSecurityData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'パスワードの変更に失敗しました');
+    }
   };
 
   const recentActivity = [
@@ -105,6 +164,10 @@ export default function ProfilePage() {
     },
   ];
 
+  if (authLoading || loading) return <LoadingScreen />;
+  if (error) return <ErrorScreen message={error} />;
+  if (!profile) return <ErrorScreen message="プロフィール情報が見つかりません" />;
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
@@ -129,9 +192,9 @@ export default function ProfilePage() {
                     <i className="ri-user-line text-3xl text-blue-600"></i>
                   </div>
                   <h3 className="text-xl font-semibold text-gray-900">
-                    {profileData.lastName} {profileData.firstName}
+                    {profile.full_name || "名前未設定"}
                   </h3>
-                  <p className="text-gray-600">{profileData.email}</p>
+                  <p className="text-gray-600">{profile.email}</p>
                 </div>
 
                 <nav className="space-y-2">
@@ -205,6 +268,7 @@ export default function ProfilePage() {
                     <button
                       onClick={() => setIsEditing(!isEditing)}
                       className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium whitespace-nowrap cursor-pointer"
+                      disabled={isSaving}
                     >
                       <i className="ri-edit-line mr-2"></i>
                       {isEditing ? "編集完了" : "編集する"}
@@ -212,65 +276,35 @@ export default function ProfilePage() {
                   </div>
 
                   <div className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          お名前（姓）
-                        </label>
-                        {isEditing ? (
-                          <input
-                            type="text"
-                            value={profileData.lastName}
-                            onChange={(e) =>
-                              handleProfileUpdate("lastName", e.target.value)
-                            }
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                        ) : (
-                          <p className="px-4 py-3 bg-gray-50 rounded-lg">
-                            {profileData.lastName}
-                          </p>
-                        )}
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          お名前（名）
-                        </label>
-                        {isEditing ? (
-                          <input
-                            type="text"
-                            value={profileData.firstName}
-                            onChange={(e) =>
-                              handleProfileUpdate("firstName", e.target.value)
-                            }
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                        ) : (
-                          <p className="px-4 py-3 bg-gray-50 rounded-lg">
-                            {profileData.firstName}
-                          </p>
-                        )}
-                      </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        お名前
+                      </label>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          value={formData.full_name}
+                          onChange={(e) =>
+                            handleFormUpdate("full_name", e.target.value)
+                          }
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="山田 太郎"
+                        />
+                      ) : (
+                        <p className="px-4 py-3 bg-gray-50 rounded-lg">
+                          {formData.full_name || "未設定"}
+                        </p>
+                      )}
                     </div>
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         メールアドレス
                       </label>
-                      {isEditing ? (
-                        <input
-                          type="email"
-                          value={profileData.email}
-                          onChange={(e) =>
-                            handleProfileUpdate("email", e.target.value)
-                          }
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                      ) : (
-                        <p className="px-4 py-3 bg-gray-50 rounded-lg">
-                          {profileData.email}
-                        </p>
-                      )}
+                      <p className="px-4 py-3 bg-gray-50 rounded-lg text-gray-500">
+                        {profile.email}
+                        <span className="ml-2 text-xs">(変更不可)</span>
+                      </p>
                     </div>
 
                     <div>
@@ -280,15 +314,16 @@ export default function ProfilePage() {
                       {isEditing ? (
                         <input
                           type="tel"
-                          value={profileData.phone}
+                          value={formData.phone}
                           onChange={(e) =>
-                            handleProfileUpdate("phone", e.target.value)
+                            handleFormUpdate("phone", e.target.value)
                           }
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="090-1234-5678"
                         />
                       ) : (
                         <p className="px-4 py-3 bg-gray-50 rounded-lg">
-                          {profileData.phone}
+                          {formData.phone || "未設定"}
                         </p>
                       )}
                     </div>
@@ -301,15 +336,15 @@ export default function ProfilePage() {
                         {isEditing ? (
                           <input
                             type="date"
-                            value={profileData.birthDate}
+                            value={formData.birth_date}
                             onChange={(e) =>
-                              handleProfileUpdate("birthDate", e.target.value)
+                              handleFormUpdate("birth_date", e.target.value)
                             }
                             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           />
                         ) : (
                           <p className="px-4 py-3 bg-gray-50 rounded-lg">
-                            {profileData.birthDate}
+                            {formData.birth_date || "未設定"}
                           </p>
                         )}
                       </div>
@@ -319,9 +354,9 @@ export default function ProfilePage() {
                         </label>
                         {isEditing ? (
                           <select
-                            value={profileData.gender}
+                            value={formData.gender}
                             onChange={(e) =>
-                              handleProfileUpdate("gender", e.target.value)
+                              handleFormUpdate("gender", e.target.value)
                             }
                             className="w-full px-4 py-3 pr-8 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           >
@@ -334,11 +369,11 @@ export default function ProfilePage() {
                           </select>
                         ) : (
                           <p className="px-4 py-3 bg-gray-50 rounded-lg">
-                            {profileData.gender === "male"
+                            {formData.gender === "male"
                               ? "男性"
-                              : profileData.gender === "female"
+                              : formData.gender === "female"
                               ? "女性"
-                              : profileData.gender === "other"
+                              : formData.gender === "other"
                               ? "その他"
                               : "回答しない"}
                           </p>
@@ -360,7 +395,7 @@ export default function ProfilePage() {
                                 : undefined
                             }
                             className={`border-2 rounded-lg p-4 text-center transition-colors ${
-                              profileData.interests.includes(interest.id)
+                              formData.interests.includes(interest.id)
                                 ? "border-blue-500 bg-blue-50"
                                 : "border-gray-200"
                             } ${
@@ -371,7 +406,7 @@ export default function ProfilePage() {
                           >
                             <div
                               className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-2 ${
-                                profileData.interests.includes(interest.id)
+                                formData.interests.includes(interest.id)
                                   ? "bg-blue-500 text-white"
                                   : "bg-gray-100 text-gray-600"
                               }`}
@@ -391,14 +426,16 @@ export default function ProfilePage() {
                         <button
                           onClick={() => setIsEditing(false)}
                           className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 px-4 rounded-lg font-semibold whitespace-nowrap cursor-pointer"
+                          disabled={isSaving}
                         >
                           キャンセル
                         </button>
                         <button
                           onClick={handleSaveProfile}
-                          className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-semibold whitespace-nowrap cursor-pointer"
+                          className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-semibold whitespace-nowrap cursor-pointer disabled:bg-gray-400"
+                          disabled={isSaving}
                         >
-                          保存する
+                          {isSaving ? "保存中..." : "保存する"}
                         </button>
                       </div>
                     )}
@@ -430,6 +467,7 @@ export default function ProfilePage() {
                           }
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           placeholder="現在のパスワードを入力"
+                          required
                         />
                       </div>
 
@@ -448,6 +486,8 @@ export default function ProfilePage() {
                           }
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           placeholder="新しいパスワードを入力"
+                          required
+                          minLength={8}
                         />
                       </div>
 
@@ -466,6 +506,8 @@ export default function ProfilePage() {
                           }
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           placeholder="新しいパスワードを再入力"
+                          required
+                          minLength={8}
                         />
                       </div>
 
@@ -491,7 +533,7 @@ export default function ProfilePage() {
                       </div>
                       <button
                         onClick={() =>
-                          alert("2段階認証を設定（シミュレーション）")
+                          alert("2段階認証を設定（今後実装予定）")
                         }
                         className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium whitespace-nowrap cursor-pointer"
                       >
@@ -522,12 +564,9 @@ export default function ProfilePage() {
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input
                           type="checkbox"
-                          checked={profileData.notifications.email}
+                          checked={formData.notification_email}
                           onChange={(e) =>
-                            handleProfileUpdate("notifications", {
-                              ...profileData.notifications,
-                              email: e.target.checked,
-                            })
+                            handleFormUpdate("notification_email", e.target.checked)
                           }
                           className="sr-only peer"
                         />
@@ -545,12 +584,9 @@ export default function ProfilePage() {
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input
                           type="checkbox"
-                          checked={profileData.notifications.sms}
+                          checked={formData.notification_sms}
                           onChange={(e) =>
-                            handleProfileUpdate("notifications", {
-                              ...profileData.notifications,
-                              sms: e.target.checked,
-                            })
+                            handleFormUpdate("notification_sms", e.target.checked)
                           }
                           className="sr-only peer"
                         />
@@ -570,12 +606,9 @@ export default function ProfilePage() {
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input
                           type="checkbox"
-                          checked={profileData.notifications.push}
+                          checked={formData.notification_push}
                           onChange={(e) =>
-                            handleProfileUpdate("notifications", {
-                              ...profileData.notifications,
-                              push: e.target.checked,
-                            })
+                            handleFormUpdate("notification_push", e.target.checked)
                           }
                           className="sr-only peer"
                         />
@@ -586,12 +619,11 @@ export default function ProfilePage() {
 
                   <div className="mt-8 pt-6 border-t border-gray-200">
                     <button
-                      onClick={() =>
-                        alert("通知設定を保存しました（シミュレーション）")
-                      }
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold whitespace-nowrap cursor-pointer"
+                      onClick={handleSaveProfile}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold whitespace-nowrap cursor-pointer disabled:bg-gray-400"
+                      disabled={isSaving}
                     >
-                      設定を保存
+                      {isSaving ? "保存中..." : "設定を保存"}
                     </button>
                   </div>
                 </div>
@@ -630,7 +662,7 @@ export default function ProfilePage() {
                   <div className="mt-8 text-center">
                     <button
                       onClick={() =>
-                        alert("全てのアクティビティを表示（シミュレーション）")
+                        alert("全てのアクティビティを表示（今後実装予定）")
                       }
                       className="text-blue-600 hover:text-blue-700 font-medium whitespace-nowrap cursor-pointer"
                     >

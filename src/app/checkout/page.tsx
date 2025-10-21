@@ -16,7 +16,8 @@ function CheckoutContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [step, setStep] = useState(1);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>("credit");
+  const [selectedPaymentMethod, setSelectedPaymentMethod] =
+    useState<PaymentMethod>("credit");
   const [stockError, setStockError] = useState<string | null>(null);
 
   // 認証情報を取得
@@ -30,7 +31,12 @@ function CheckoutContent() {
   );
 
   // イベント情報をDBから取得
-  const { event, loading: eventLoading, error: eventError, refetch } = useEvent(eventId || '');
+  const {
+    event,
+    loading: eventLoading,
+    error: eventError,
+    refetch,
+  } = useEvent(eventId || "");
 
   // 決済フックを使用
   const {
@@ -55,19 +61,22 @@ function CheckoutContent() {
         email: profile.email || "",
         lastName: nameParts[0] || "",
         firstName: nameParts[1] || "",
-        phone: "",
+        phone: profile.phone || "",
       });
     }
   }, [isAuthenticated, profile]);
 
-  const tickets = useMemo(() => event?.ticket_types || [], [event?.ticket_types]);
+  const tickets = useMemo(
+    () => event?.ticket_types || [],
+    [event?.ticket_types]
+  );
 
   // チケット在庫確認関数
   const validateTicketAvailability = useCallback(async () => {
     setStockError(null);
 
     for (const [ticketId, count] of Object.entries(selectedTickets)) {
-      const ticket = tickets.find(t => t.id === ticketId);
+      const ticket = tickets.find((t) => t.id === ticketId);
       if (!ticket) continue;
 
       const availableStock = ticket.quantity_total - ticket.quantity_sold;
@@ -111,7 +120,12 @@ function CheckoutContent() {
     }
 
     // バリデーション
-    if (!formData.email || !formData.firstName || !formData.lastName || !formData.phone) {
+    if (
+      !formData.email ||
+      !formData.firstName ||
+      !formData.lastName ||
+      !formData.phone
+    ) {
       alert("すべての項目を入力してください");
       return;
     }
@@ -164,7 +178,9 @@ function CheckoutContent() {
           window.location.href = result.redirectUrl;
         } else {
           // その他の場合（通常は発生しない）
-          router.push(`/purchase-complete?order_id=${result.orderId}&payment_method=${selectedPaymentMethod}`);
+          router.push(
+            `/purchase-complete?order_id=${result.orderId}&payment_method=${selectedPaymentMethod}`
+          );
         }
       }
     } catch (error) {
@@ -180,7 +196,12 @@ function CheckoutContent() {
 
   // エラー表示
   if (eventError || !event) {
-    return <ErrorScreen message={eventError || "イベント情報が見つかりません"} onRetry={refetch} />;
+    return (
+      <ErrorScreen
+        message={eventError || "イベント情報が見つかりません"}
+        onRetry={refetch}
+      />
+    );
   }
 
   return (
@@ -215,7 +236,9 @@ function CheckoutContent() {
                 <p className="font-semibold mb-1">エラーが発生しました</p>
                 <p>{stockError || paymentError?.message}</p>
                 {paymentError?.code && (
-                  <p className="text-xs mt-1 text-red-600">エラーコード: {paymentError.code}</p>
+                  <p className="text-xs mt-1 text-red-600">
+                    エラーコード: {paymentError.code}
+                  </p>
                 )}
               </div>
               <button
@@ -398,7 +421,9 @@ function CheckoutContent() {
                   {paymentMethods.map((method) => (
                     <div
                       key={method.id}
-                      onClick={() => setSelectedPaymentMethod(method.id as PaymentMethod)}
+                      onClick={() =>
+                        setSelectedPaymentMethod(method.id as PaymentMethod)
+                      }
                       className={`border-2 rounded-lg p-4 cursor-pointer transition-colors ${
                         selectedPaymentMethod === method.id
                           ? "border-blue-500 bg-blue-50"
@@ -433,9 +458,12 @@ function CheckoutContent() {
                       <p className="font-semibold mb-1">決済について</p>
                       <p>
                         次のステップで「購入を確定する」をクリックすると、安全な決済ページに移動します。
-                        {selectedPaymentMethod === "credit" && "カード情報はStripeの安全なページで入力いただきます。"}
-                        {selectedPaymentMethod === "convenience" && "コンビニ決済用の支払い番号が発行されます。"}
-                        {selectedPaymentMethod === "paypay" && "PayPayアプリで決済を完了してください。"}
+                        {selectedPaymentMethod === "credit" &&
+                          "カード情報はStripeの安全なページで入力いただきます。"}
+                        {selectedPaymentMethod === "convenience" &&
+                          "コンビニ決済用の支払い番号が発行されます。"}
+                        {selectedPaymentMethod === "paypay" &&
+                          "PayPayアプリで決済を完了してください。"}
                       </p>
                     </div>
                   </div>
@@ -489,15 +517,28 @@ function CheckoutContent() {
                     </h3>
                     <div className="bg-gray-50 rounded-lg p-4">
                       <div className="flex items-center">
-                        <i className={`${paymentMethods.find((m) => m.id === selectedPaymentMethod)?.icon} text-xl mr-2`}></i>
+                        <i
+                          className={`${
+                            paymentMethods.find(
+                              (m) => m.id === selectedPaymentMethod
+                            )?.icon
+                          } text-xl mr-2`}
+                        ></i>
                         <p>
-                          {paymentMethods.find((m) => m.id === selectedPaymentMethod)?.name}
+                          {
+                            paymentMethods.find(
+                              (m) => m.id === selectedPaymentMethod
+                            )?.name
+                          }
                         </p>
                       </div>
                       <p className="text-sm text-gray-600 mt-2">
-                        {selectedPaymentMethod === "credit" && "Stripeの安全な決済ページでカード情報を入力します"}
-                        {selectedPaymentMethod === "convenience" && "コンビニ決済用の支払い番号が発行されます"}
-                        {selectedPaymentMethod === "paypay" && "PayPayアプリで決済を完了します"}
+                        {selectedPaymentMethod === "credit" &&
+                          "Stripeの安全な決済ページでカード情報を入力します"}
+                        {selectedPaymentMethod === "convenience" &&
+                          "コンビニ決済用の支払い番号が発行されます"}
+                        {selectedPaymentMethod === "paypay" &&
+                          "PayPayアプリで決済を完了します"}
                       </p>
                     </div>
                   </div>
@@ -565,7 +606,13 @@ function CheckoutContent() {
                 <h4 className="font-semibold text-gray-900 mb-2">
                   {event.title}
                 </h4>
-                <p className="text-sm text-gray-600">{new Date(event.date_start).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                <p className="text-sm text-gray-600">
+                  {new Date(event.date_start).toLocaleDateString("ja-JP", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </p>
                 <p className="text-sm text-gray-600">{event.location}</p>
               </div>
 
