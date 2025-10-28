@@ -226,7 +226,7 @@ export const handleStripeError = (error: any): { code: string; message: string }
 ### 2. 機能制限
 - PayPay決済のリアルタイム通知未実装
 - Webhook処理未実装（今後対応予定）
-- 返金処理未実装（今後対応予定）
+- ✅ 返金処理実装済み（2025年10月28日完了）
 
 ## 今後の拡張予定
 
@@ -237,7 +237,7 @@ export const handleStripeError = (error: any): { code: string; message: string }
 
 ### 2. 管理機能
 - 決済履歴管理
-- 返金処理機能
+- ✅ 返金処理機能（2025年10月28日実装完了）
 - 売上分析・レポート
 
 ### 3. UX改善
@@ -251,7 +251,46 @@ export const handleStripeError = (error: any): { code: string; message: string }
 - [Next.js API Routes](https://nextjs.org/docs/api-routes/introduction)
 - [Supabase JavaScript Client](https://supabase.com/docs/reference/javascript)
 
+## 返金処理の実装（2025年10月28日追加）
+
+### 返金API実装
+**ファイル**: `src/app/api/payments/refund/route.ts`
+
+#### 機能
+- Stripe Refund API統合（クレジットカード決済の返金）
+- PayPayは将来対応予定（現在はステータス更新のみ）
+- 注文ステータス更新（`paid` → `refunded`）
+- チケットステータス更新（`valid` → `cancelled`）
+- チケット在庫復元（`quantity_sold`を減算）
+- 詳細なエラーハンドリング
+
+#### 返金処理フロー
+```typescript
+1. 注文情報取得（order_items、チケット情報含む）
+2. 支払済み（paid）状態の確認
+3. Stripe返金処理（クレジット決済の場合）
+4. 注文ステータス更新（refunded）
+5. チケットキャンセル（cancelled）
+6. チケット在庫復元
+```
+
+#### 使用方法
+```typescript
+// フロントエンド（管理画面）
+const response = await fetch('/api/payments/refund', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ orderId }),
+});
+```
+
+### セキュリティ
+- 管理画面からのみアクセス可能
+- 支払済み注文のみ返金可能
+- 返金後はロールバック不可（確認ダイアログ必須）
+
 ## 関連タスク
 - ✅ task-payment-system.md（完了）
-- 次: task-qr-ticket-system.md（QRコード・チケットシステム）
-- 将来: Webhook処理・返金機能の実装
+- ✅ task-admin-order-management.md（完了 - 返金処理含む）
+- ✅ task-qr-ticket-system.md（QRコード・チケットシステム - 完了）
+- 将来: Webhook処理の実装

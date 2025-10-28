@@ -1,7 +1,7 @@
 
 # プロジェクト ディレクトリ構造
 
-最終更新: 2025年10月5日 (実装状況の精査・更新)
+最終更新: 2025年10月28日 (返金API追加)
 
 ## src/ ディレクトリ構造
 
@@ -23,7 +23,7 @@ src/
 │   │   ├── scanner/            # QRスキャナーページ
 │   │   │   └── page.tsx
 │   │   └── page.tsx            # 管理画面メイン (✅ AdminLayout適用済み)
-│   ├── api/                    # ✅ API Routes (6エンドポイント)
+│   ├── api/                    # ✅ API Routes (7エンドポイント)
 │   │   ├── orders/             # ✅ 注文API
 │   │   │   ├── by-custom-id/   # カスタムID検索
 │   │   │   │   └── route.ts
@@ -32,8 +32,10 @@ src/
 │   │   ├── payments/           # ✅ 決済API
 │   │   │   ├── create-payment-intent/
 │   │   │   │   └── route.ts    # 決済Intent作成API
-│   │   │   └── confirm-payment/
-│   │   │       └── route.ts    # 決済確認API
+│   │   │   ├── confirm-payment/
+│   │   │   │   └── route.ts    # 決済確認API
+│   │   │   └── refund/         # ✅ 返金API (2025-10-28追加)
+│   │   │       └── route.ts    # Stripe返金処理・在庫復元
 │   │   ├── tickets/            # ✅ チケットAPI
 │   │   │   └── verify/         # ✅ QRコード検証API
 │   │   │       └── route.ts    # チケット検証・使用済みマーク

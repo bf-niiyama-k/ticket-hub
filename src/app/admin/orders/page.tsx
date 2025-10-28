@@ -14,10 +14,7 @@ export default function OrderManagement() {
   const [selectedOrder, setSelectedOrder] = useState<OrderWithItems | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [filterStatus, setFilterStatus] = useState('all');
-
-  const filteredOrders = orders.filter(order => 
-    filterStatus === 'all' || order.status === filterStatus
-  );
+  const [searchTerm, setSearchTerm] = useState('');
 
   // 顧客名を取得するヘルパー関数
   const getCustomerName = (userId: string | null, guestInfo?: { name?: string; email?: string } | null) => {
@@ -45,20 +42,55 @@ export default function OrderManagement() {
     return event?.title || '不明なイベント';
   };
 
+  // フィルタリング処理
+  const filteredOrders = orders.filter(order => {
+    // ステータスフィルター
+    const matchesStatus = filterStatus === 'all' || order.status === filterStatus;
+
+    // 検索フィルター
+    if (!searchTerm) return matchesStatus;
+
+    const searchLower = searchTerm.toLowerCase();
+    const matchesSearch =
+      order.id.toLowerCase().includes(searchLower) ||
+      getCustomerName(order.user_id, order.guest_info).toLowerCase().includes(searchLower) ||
+      getCustomerEmail(order.user_id, order.guest_info).toLowerCase().includes(searchLower);
+
+    return matchesStatus && matchesSearch;
+  });
+
   const showOrderDetail = (order: OrderWithItems) => {
     setSelectedOrder(order);
     setShowDetailModal(true);
   };
 
   const handleRefund = async (orderId: string) => {
-    if (confirm('この注文を返金してもよろしいですか？')) {
-      try {
-        await updateOrder(orderId, { status: 'refunded' });
-        setShowDetailModal(false);
-        alert('返金処理が完了しました');
-      } catch {
-        alert('返金処理に失敗しました');
+    if (!confirm('この注文を返金してもよろしいですか？\nチケットはキャンセルされ、在庫が復元されます。')) {
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/payments/refund', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || '返金処理に失敗しました');
       }
+
+      // 成功時
+      alert('返金処理が完了しました');
+      setShowDetailModal(false);
+
+      // 注文リストを再取得するため、ページをリロード
+      window.location.reload();
+    } catch (error) {
+      console.error('返金エラー:', error);
+      alert(error instanceof Error ? error.message : '返金処理に失敗しました');
     }
   };
 
@@ -200,11 +232,22 @@ export default function OrderManagement() {
 
         <div className="bg-white rounded-lg shadow-sm">
           <div className="px-6 py-4 border-b border-gray-200">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
               <h2 className="text-lg font-semibold text-gray-900">注文一覧</h2>
-              
-              {/* フィルター */}
-              <div className="flex space-x-2">
+
+              {/* 検索とフィルター */}
+              <div className="flex flex-col sm:flex-row gap-2">
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="注文ID、顧客名、メールで検索..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm w-full sm:w-64"
+                  />
+                  <i className="ri-search-line absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                </div>
+
                 <select
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}

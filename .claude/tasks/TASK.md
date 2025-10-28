@@ -83,23 +83,28 @@
      - プロフィール更新API実装
      - バリデーション追加
 
-2. **QRスキャナーの完全実装** (`task-qr-scanner-implementation.md`)
-   - **ファイル**: `src/app/admin/scanner/page.tsx`
-   - **状態**: 基本構造のみ、実際のQRスキャン機能未実装
-   - **必要な実装**:
-     - `html5-qrcode` ライブラリのインストール
-     - カメラアクセス・QRスキャン機能
-     - `ticketAPI.getTicketByQR()` 実装
-     - チケット検証・使用処理
+2. ✅ **QRスキャナーの完全実装** (`task-qr-scanner-implementation.md`) ✅ **(2025年10月21日完了)**
+   - **ファイル**: `src/app/admin/scanner/page.tsx`, `src/components/ticket/QRCodeScanner.tsx`
+   - **状態**: 完全実装完了（DB連携済み）
+   - **実装済み**:
+     - ✅ `html5-qrcode` ライブラリ使用（既にインストール済み）
+     - ✅ カメラアクセス・QRスキャン機能（fps: 0.5で安定動作）
+     - ✅ `ticketAPI.getTicketByQR()` による実DB検索
+     - ✅ チケット検証・使用処理（ステータス管理）
+     - ✅ 手動入力モード実装
+     - ✅ 統計表示機能（本日のスキャン数、有効/使用済み/エラー数）
+     - ✅ エラーハンドリング強化（カメラ権限エラー表示）
+     - ✅ 効果音機能実装
 
-3. **返金処理の完全実装** (`task-admin-order-management.md`)
-   - **ファイル**: `src/app/admin/orders/page.tsx`、新規API
-   - **状態**: 注文ステータス更新のみ、Stripe API未統合
-   - **必要な実装**:
-     - `src/app/api/payments/refund/route.ts` 作成
-     - Stripe Refund API呼び出し
-     - チケットステータス更新（cancelled）
-     - チケット在庫復元
+3. ✅ **返金処理の完全実装** (`task-admin-order-management.md`) ✅ **(2025年10月28日完了)**
+   - **ファイル**: `src/app/admin/orders/page.tsx`、`src/app/api/payments/refund/route.ts`
+   - **状態**: 完全実装完了
+   - **実装済み**:
+     - ✅ `src/app/api/payments/refund/route.ts` 作成完了
+     - ✅ Stripe Refund API呼び出し
+     - ✅ チケットステータス更新（cancelled）
+     - ✅ チケット在庫復元
+     - ✅ エラーハンドリング実装
 
 4. **PDFダウンロード機能の実装** (`task-my-tickets-implementation.md`)
    - **ファイル**: `src/app/my-tickets/page.tsx`、`src/app/purchase-complete/page.tsx`
@@ -114,23 +119,17 @@
    - **ファイル**: `src/app/checkout/page.tsx:368`
    - チェックボックスのバリデーション追加
 
-2. **統計カードの実装** (`task-admin-order-management.md`)
-   - 総注文数、総売上、今日の注文・売上の表示
-
-3. **売上分析のDB連携**
+2. **売上分析のDB連携**
    - **ファイル**: `src/app/admin/analytics/page.tsx:20-81`
    - ダミーデータの削除、実データ連携
 
-4. **カテゴリ機能の追加**
+3. **カテゴリ機能の追加**
    - DBスキーマに `events.category` カラム追加
    - フィルタリング実装
 
-5. **イベント並び替え機能の実装**
+4. **イベント並び替え機能の実装**
    - **ファイル**: `src/app/events/page.tsx:40-52`
    - UIは実装済み、ロジック未実装
-
-6. **検索機能の実装** (`task-admin-order-management.md`)
-   - 注文ID、顧客名、メールアドレス検索
 
 ### 🟢 低優先度（品質向上）
 
@@ -168,20 +167,23 @@
   - ✅ フィルタリング機能
   - ⚠️ PDFダウンロードのみ未実装
 
-### ⚠️ 管理画面注文管理
-- ⚠️ **task-admin-order-management.md** - 大部分完了
+### ✅ 管理画面注文管理
+- ✅ **task-admin-order-management.md** - 完全実装完了 **(2025年10月28日完了)**
   - ✅ 注文一覧・詳細表示
   - ✅ フィルタリング
-  - ⚠️ 統計カード未実装
-  - ⚠️ 検索機能未実装
-  - ❌ 返金処理（Stripe API）未実装
+  - ✅ 統計カード実装
+  - ✅ 検索機能実装
+  - ✅ 返金処理（Stripe API）完全実装
 
-### ⚠️ QRスキャナー
-- ⚠️ **task-qr-scanner-implementation.md** - 基本構造のみ
+### ✅ QRスキャナー
+- ✅ **task-qr-scanner-implementation.md** - 完全実装完了 **(2025年10月21日完了)**
   - ✅ ページ・コンポーネント作成
-  - ❌ 実際のQRスキャン機能未実装
+  - ✅ 実際のQRスキャン機能実装完了（DB連携済み）
+  - ✅ カメラアクセス・手動入力モード
+  - ✅ チケット検証・使用処理
+  - ✅ 統計表示・エラーハンドリング
 
 ---
 
 ## 進捗更新日
-2025年10月5日（実装状況の完全精査完了）
+2025年10月28日（管理画面注文管理・返金処理完全実装完了）
