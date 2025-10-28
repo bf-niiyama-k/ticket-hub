@@ -9,6 +9,13 @@ import { eventAPI, ticketTypeAPI } from '@/lib/database';
 import LoadingScreen from '@/components/shared/LoadingScreen';
 import ErrorScreen from '@/components/shared/ErrorScreen';
 import type { TicketType } from '@/types/database';
+import {
+  MdArrowBack,
+  MdDelete,
+  MdClose,
+  MdCalendarToday,
+  MdLocationOn
+} from 'react-icons/md';
 
 interface EventEditProps {
   eventId: string;
@@ -168,7 +175,7 @@ export default function EventEdit({ eventId }: EventEditProps) {
                 href="/admin/events"
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                <i className="ri-arrow-left-line text-gray-600 text-xl w-5 h-5 flex items-center justify-center"></i>
+                <MdArrowBack className="text-gray-600 text-xl w-5 h-5" />
               </Link>
               <h1 className="text-xl font-semibold text-gray-900">イベント編集</h1>
             </div>
@@ -350,7 +357,7 @@ export default function EventEdit({ eventId }: EventEditProps) {
                             onClick={() => handleRemoveTicketType(ticket)}
                             className="text-red-600 hover:text-red-800"
                           >
-                            <i className="ri-delete-bin-line text-lg w-5 h-5 flex items-center justify-center"></i>
+                            <MdDelete className="text-lg w-5 h-5" />
                           </button>
                         )}
                       </div>
@@ -444,7 +451,7 @@ export default function EventEdit({ eventId }: EventEditProps) {
                 onClick={() => setShowPreview(false)}
                 className="p-1 hover:bg-gray-100 rounded"
               >
-                <i className="ri-close-line text-gray-600 text-xl w-5 h-5 flex items-center justify-center"></i>
+                <MdClose className="text-gray-600 text-xl w-5 h-5" />
               </button>
             </div>
 
@@ -464,11 +471,11 @@ export default function EventEdit({ eventId }: EventEditProps) {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                   <div className="space-y-3">
                     <div className="flex items-center text-gray-600">
-                      <i className="ri-calendar-line text-lg mr-3 w-5 h-5 flex items-center justify-center"></i>
+                      <MdCalendarToday className="text-lg mr-3 w-5 h-5" />
                       <span>{dateStart} 〜 {dateEnd}</span>
                     </div>
                     <div className="flex items-center text-gray-600">
-                      <i className="ri-map-pin-line text-lg mr-3 w-5 h-5 flex items-center justify-center"></i>
+                      <MdLocationOn className="text-lg mr-3 w-5 h-5" />
                       <span>{location}</span>
                     </div>
                   </div>

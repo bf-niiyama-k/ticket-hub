@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useEvents } from '@/hooks';
 import { useAuth } from '@/hooks/useAuth';
 import type { EventFormData } from '@/types/database';
+import { MdArrowBack, MdClose } from 'react-icons/md';
 
 export default function EventManagement() {
   const { user } = useAuth();
@@ -93,11 +94,11 @@ export default function EventManagement() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
-              <Link 
+              <Link
                 href="/admin"
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                <i className="ri-arrow-left-line text-gray-600 text-xl w-5 h-5 flex items-center justify-center"></i>
+                <MdArrowBack className="text-gray-600 text-xl w-5 h-5" />
               </Link>
               <h1 className="text-xl font-semibold text-gray-900">イベント管理</h1>
             </div>
@@ -219,7 +220,7 @@ export default function EventManagement() {
                 onClick={() => setShowCreateModal(false)}
                 className="p-1 hover:bg-gray-100 rounded"
               >
-                <i className="ri-close-line text-gray-600 text-xl w-5 h-5 flex items-center justify-center"></i>
+                <MdClose className="text-gray-600 text-xl w-5 h-5" />
               </button>
             </div>
             

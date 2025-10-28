@@ -5,6 +5,16 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useAnalytics } from '@/hooks';
 import { useAuth } from '@/hooks/useAuth';
+import {
+  MdArrowBack,
+  MdCurrencyYen,
+  MdConfirmationNumber,
+  MdPerson,
+  MdShoppingCart,
+  MdArrowUpward,
+  MdLock,
+  MdWorkspacePremium
+} from 'react-icons/md';
 
 export default function Analytics() {
   const { user } = useAuth();
@@ -78,11 +88,11 @@ export default function Analytics() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
-              <Link 
+              <Link
                 href="/admin"
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                <i className="ri-arrow-left-line text-gray-600 text-xl w-5 h-5 flex items-center justify-center"></i>
+                <MdArrowBack className="text-gray-600 text-xl w-5 h-5" />
               </Link>
               <h1 className="text-xl font-semibold text-gray-900">売上分析</h1>
               {!isPremiumUser && (
@@ -128,7 +138,7 @@ export default function Analytics() {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <div className="p-3 bg-blue-100 rounded-full">
-                  <i className="ri-vip-crown-line text-2xl text-blue-600"></i>
+                  <MdWorkspacePremium className="text-2xl text-blue-600" />
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">プレミアムプランで全機能を利用</h3>
@@ -153,17 +163,17 @@ export default function Analytics() {
                   <p className="text-2xl font-semibold text-gray-900">¥{stats.totalRevenue.toLocaleString()}</p>
                 </div>
                 <div className="p-2 bg-green-100 rounded-lg">
-                  <i className="ri-money-yen-circle-line text-green-600 text-xl w-6 h-6 flex items-center justify-center"></i>
+                  <MdCurrencyYen className="text-green-600 text-xl w-6 h-6" />
                 </div>
               </div>
               <div className="mt-2 flex items-center">
-                <i className="ri-arrow-up-line text-green-500 text-sm w-4 h-4 flex items-center justify-center mr-1"></i>
+                <MdArrowUpward className="text-green-500 text-sm w-4 h-4 mr-1" />
                 <span className="text-sm text-green-600">+{stats.revenueGrowth || 0}%</span>
                 <span className="text-sm text-gray-500 ml-2">前月比</span>
               </div>
               {!isPremiumUser && (
                 <div className="absolute inset-0 bg-white bg-opacity-60 backdrop-blur-sm rounded-lg flex items-center justify-center">
-                  <i className="ri-lock-line text-gray-400 text-2xl"></i>
+                  <MdLock className="text-gray-400 text-2xl" />
                 </div>
               )}
             </div>
@@ -175,17 +185,17 @@ export default function Analytics() {
                   <p className="text-2xl font-semibold text-gray-900">{stats.totalTickets.toLocaleString()}</p>
                 </div>
                 <div className="p-2 bg-blue-100 rounded-lg">
-                  <i className="ri-ticket-2-line text-blue-600 text-xl w-6 h-6 flex items-center justify-center"></i>
+                  <MdConfirmationNumber className="text-blue-600 text-xl w-6 h-6" />
                 </div>
               </div>
               <div className="mt-2 flex items-center">
-                <i className="ri-arrow-up-line text-green-500 text-sm w-4 h-4 flex items-center justify-center mr-1"></i>
+                <MdArrowUpward className="text-green-500 text-sm w-4 h-4 mr-1" />
                 <span className="text-sm text-green-600">+{stats.ticketGrowth || 0}%</span>
                 <span className="text-sm text-gray-500 ml-2">前月比</span>
               </div>
               {!isPremiumUser && (
                 <div className="absolute inset-0 bg-white bg-opacity-60 backdrop-blur-sm rounded-lg flex items-center justify-center">
-                  <i className="ri-lock-line text-gray-400 text-2xl"></i>
+                  <MdLock className="text-gray-400 text-2xl" />
                 </div>
               )}
             </div>
@@ -197,17 +207,17 @@ export default function Analytics() {
                   <p className="text-2xl font-semibold text-gray-900">{stats.totalCustomers}</p>
                 </div>
                 <div className="p-2 bg-purple-100 rounded-lg">
-                  <i className="ri-user-line text-purple-600 text-xl w-6 h-6 flex items-center justify-center"></i>
+                  <MdPerson className="text-purple-600 text-xl w-6 h-6" />
                 </div>
               </div>
               <div className="mt-2 flex items-center">
-                <i className="ri-arrow-up-line text-green-500 text-sm w-4 h-4 flex items-center justify-center mr-1"></i>
+                <MdArrowUpward className="text-green-500 text-sm w-4 h-4 mr-1" />
                 <span className="text-sm text-green-600">+{stats.customerGrowth || 0}%</span>
                 <span className="text-sm text-gray-500 ml-2">前月比</span>
               </div>
               {!isPremiumUser && (
                 <div className="absolute inset-0 bg-white bg-opacity-60 backdrop-blur-sm rounded-lg flex items-center justify-center">
-                  <i className="ri-lock-line text-gray-400 text-2xl"></i>
+                  <MdLock className="text-gray-400 text-2xl" />
                 </div>
               )}
             </div>
@@ -219,17 +229,17 @@ export default function Analytics() {
                   <p className="text-2xl font-semibold text-gray-900">¥{stats.avgOrderValue.toLocaleString()}</p>
                 </div>
                 <div className="p-2 bg-orange-100 rounded-lg">
-                  <i className="ri-shopping-cart-line text-orange-600 text-xl w-6 h-6 flex items-center justify-center"></i>
+                  <MdShoppingCart className="text-orange-600 text-xl w-6 h-6" />
                 </div>
               </div>
               <div className="mt-2 flex items-center">
-                <i className="ri-arrow-up-line text-green-500 text-sm w-4 h-4 flex items-center justify-center mr-1"></i>
+                <MdArrowUpward className="text-green-500 text-sm w-4 h-4 mr-1" />
                 <span className="text-sm text-green-600">+8.2%</span>
                 <span className="text-sm text-gray-500 ml-2">前月比</span>
               </div>
               {!isPremiumUser && (
                 <div className="absolute inset-0 bg-white bg-opacity-60 backdrop-blur-sm rounded-lg flex items-center justify-center">
-                  <i className="ri-lock-line text-gray-400 text-2xl"></i>
+                  <MdLock className="text-gray-400 text-2xl" />
                 </div>
               )}
             </div>
@@ -256,7 +266,7 @@ export default function Analytics() {
               {!isPremiumUser && (
                 <div className="absolute inset-0 bg-white bg-opacity-50 backdrop-blur-sm rounded-lg flex items-center justify-center">
                   <div className="text-center">
-                    <i className="ri-lock-line text-gray-400 text-3xl mb-2"></i>
+                    <MdLock className="text-gray-400 text-3xl mb-2 mx-auto" />
                     <p className="text-gray-600 font-medium">プレミアムプランで詳細表示</p>
                   </div>
                 </div>
@@ -288,7 +298,7 @@ export default function Analytics() {
               {!isPremiumUser && (
                 <div className="absolute inset-0 bg-white bg-opacity-50 backdrop-blur-sm rounded-lg flex items-center justify-center">
                   <div className="text-center">
-                    <i className="ri-lock-line text-gray-400 text-3xl mb-2"></i>
+                    <MdLock className="text-gray-400 text-3xl mb-2 mx-auto" />
                     <p className="text-gray-600 font-medium">プレミアムプランで詳細表示</p>
                   </div>
                 </div>
@@ -327,7 +337,7 @@ export default function Analytics() {
               {!isPremiumUser && (
                 <div className="absolute inset-0 bg-white bg-opacity-50 backdrop-blur-sm rounded-lg flex items-center justify-center">
                   <div className="text-center">
-                    <i className="ri-lock-line text-gray-400 text-3xl mb-2"></i>
+                    <MdLock className="text-gray-400 text-3xl mb-2 mx-auto" />
                     <p className="text-gray-600 font-medium">プレミアムプランで詳細表示</p>
                   </div>
                 </div>
@@ -361,7 +371,7 @@ export default function Analytics() {
               {!isPremiumUser && (
                 <div className="absolute inset-0 bg-white bg-opacity-50 backdrop-blur-sm rounded-lg flex items-center justify-center">
                   <div className="text-center">
-                    <i className="ri-lock-line text-gray-400 text-3xl mb-2"></i>
+                    <MdLock className="text-gray-400 text-3xl mb-2 mx-auto" />
                     <p className="text-gray-600 font-medium">プレミアムプランで詳細表示</p>
                   </div>
                 </div>
@@ -432,7 +442,7 @@ export default function Analytics() {
             {!isPremiumUser && (
               <div className="absolute inset-0 bg-white bg-opacity-50 backdrop-blur-sm rounded-lg flex items-center justify-center">
                 <div className="text-center">
-                  <i className="ri-lock-line text-gray-400 text-4xl mb-3"></i>
+                  <MdLock className="text-gray-400 text-4xl mb-3 mx-auto" />
                   <p className="text-gray-600 font-medium text-lg mb-2">詳細データはプレミアムプランで</p>
                   <p className="text-gray-500 text-sm mb-4">エクスポート機能やより詳細な分析をご利用いただけます</p>
                   <button className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">

@@ -5,6 +5,15 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useCustomers, useOrders } from '@/hooks';
 import type { Profile } from '@/types/database';
+import {
+  MdArrowBack,
+  MdPerson,
+  MdStars,
+  MdShoppingCart,
+  MdCurrencyYen,
+  MdSearch,
+  MdClose
+} from 'react-icons/md';
 
 export default function CustomerManagement() {
   const { customers, loading, error } = useCustomers();
@@ -60,11 +69,11 @@ export default function CustomerManagement() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
-              <Link 
+              <Link
                 href="/admin"
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                <i className="ri-arrow-left-line text-gray-600 text-xl w-5 h-5 flex items-center justify-center"></i>
+                <MdArrowBack className="text-gray-600 text-xl w-5 h-5" />
               </Link>
               <h1 className="text-xl font-semibold text-gray-900">顧客管理</h1>
             </div>
@@ -78,7 +87,7 @@ export default function CustomerManagement() {
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center">
               <div className="p-2 bg-blue-100 rounded-lg">
-                <i className="ri-user-line text-blue-600 text-xl w-6 h-6 flex items-center justify-center"></i>
+                <MdPerson className="text-blue-600 text-xl w-6 h-6" />
               </div>
               <div className="ml-4">
                 <p className="text-sm text-gray-600">総顧客数</p>
@@ -90,7 +99,7 @@ export default function CustomerManagement() {
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center">
               <div className="p-2 bg-green-100 rounded-lg">
-                <i className="ri-user-star-line text-green-600 text-xl w-6 h-6 flex items-center justify-center"></i>
+                <MdStars className="text-green-600 text-xl w-6 h-6" />
               </div>
               <div className="ml-4">
                 <p className="text-sm text-gray-600">メンバー顧客</p>
@@ -104,12 +113,12 @@ export default function CustomerManagement() {
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center">
               <div className="p-2 bg-purple-100 rounded-lg">
-                <i className="ri-shopping-cart-line text-purple-600 text-xl w-6 h-6 flex items-center justify-center"></i>
+                <MdShoppingCart className="text-purple-600 text-xl w-6 h-6" />
               </div>
               <div className="ml-4">
                 <p className="text-sm text-gray-600">平均購入回数</p>
                 <p className="text-2xl font-semibold text-gray-900">
-                  {customers.length > 0 
+                  {customers.length > 0
                     ? (customers.reduce((sum, c) => sum + getCustomerStats(c.id).totalPurchases, 0) / customers.length).toFixed(1)
                     : '0'
                   }
@@ -121,12 +130,12 @@ export default function CustomerManagement() {
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center">
               <div className="p-2 bg-orange-100 rounded-lg">
-                <i className="ri-money-yen-circle-line text-orange-600 text-xl w-6 h-6 flex items-center justify-center"></i>
+                <MdCurrencyYen className="text-orange-600 text-xl w-6 h-6" />
               </div>
               <div className="ml-4">
                 <p className="text-sm text-gray-600">平均購入額</p>
                 <p className="text-2xl font-semibold text-gray-900">
-                  ¥{customers.length > 0 
+                  ¥{customers.length > 0
                     ? Math.round(customers.reduce((sum, c) => sum + getCustomerStats(c.id).totalSpent, 0) / customers.length).toLocaleString()
                     : '0'
                   }
@@ -144,7 +153,7 @@ export default function CustomerManagement() {
               {/* 検索バー */}
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <i className="ri-search-line text-gray-400 text-sm w-4 h-4 flex items-center justify-center"></i>
+                  <MdSearch className="text-gray-400 text-sm w-4 h-4" />
                 </div>
                 <input
                   type="text"
@@ -249,7 +258,7 @@ export default function CustomerManagement() {
                 onClick={() => setShowDetailModal(false)}
                 className="p-1 hover:bg-gray-100 rounded"
               >
-                <i className="ri-close-line text-gray-600 text-xl w-5 h-5 flex items-center justify-center"></i>
+                <MdClose className="text-gray-600 text-xl w-5 h-5" />
               </button>
             </div>
             

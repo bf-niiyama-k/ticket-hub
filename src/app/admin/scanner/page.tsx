@@ -5,6 +5,12 @@ import Link from "next/link";
 import QRCodeScanner from "../../../components/ticket/QRCodeScanner";
 import { TicketScanResult } from "../../../types/ticket";
 import { ticketAPI } from "@/lib/database";
+import {
+  MdArrowBack,
+  MdCheck,
+  MdClose,
+  MdRefresh
+} from 'react-icons/md';
 
 interface ScanHistoryItem {
   id: number;
@@ -139,7 +145,7 @@ export default function QRScanner() {
                 href="/admin"
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                <i className="ri-arrow-left-line text-gray-600 text-xl w-5 h-5 flex items-center justify-center"></i>
+                <MdArrowBack className="text-gray-600 text-xl w-5 h-5" />
               </Link>
               <h1 className="text-xl font-semibold text-gray-900">
                 QRコード照合
@@ -202,13 +208,11 @@ export default function QRScanner() {
                   }`}
                 >
                   <div className="flex items-center mb-2">
-                    <i
-                      className={`text-xl mr-2 w-6 h-6 flex items-center justify-center ${
-                        scanResult.success
-                          ? "ri-check-line text-green-600"
-                          : "ri-close-line text-red-600"
-                      }`}
-                    ></i>
+                    {scanResult.success ? (
+                      <MdCheck className="text-xl mr-2 w-6 h-6 text-green-600" />
+                    ) : (
+                      <MdClose className="text-xl mr-2 w-6 h-6 text-red-600" />
+                    )}
                     <span className="font-semibold text-sm">
                       {scanResult.status === "valid"
                         ? "有効なチケット"
@@ -291,7 +295,7 @@ export default function QRScanner() {
                       >
                         {isConfirming ? (
                           <>
-                            <i className="ri-loader-4-line mr-2 animate-spin"></i>
+                            <MdRefresh className="mr-2 animate-spin inline" />
                             処理中...
                           </>
                         ) : (
@@ -302,7 +306,7 @@ export default function QRScanner() {
 
                     {scanResult.status === "used" && (
                       <div className="w-full mt-4 px-4 py-2 bg-gray-100 text-gray-600 rounded-lg text-center">
-                        <i className="ri-check-line mr-2"></i>
+                        <MdCheck className="mr-2 inline" />
                         入場済み
                       </div>
                     )}

@@ -2,6 +2,8 @@
 
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { MdArrowUpward, MdArrowDownward, MdRemove, MdLock } from 'react-icons/md';
+import { IconType } from 'react-icons';
 
 interface StatsCardProps {
   title: string;
@@ -11,7 +13,7 @@ interface StatsCardProps {
     label: string;
     trend: 'up' | 'down' | 'neutral';
   };
-  icon: string; // Remix icon class
+  icon: IconType; // React Icon component
   iconColor?: string;
   iconBgColor?: string;
   locked?: boolean;
@@ -38,11 +40,11 @@ export default function StatsCard({
   const getTrendIcon = (trend: 'up' | 'down' | 'neutral') => {
     switch (trend) {
       case 'up':
-        return 'ri-arrow-up-line';
+        return MdArrowUpward;
       case 'down':
-        return 'ri-arrow-down-line';
+        return MdArrowDownward;
       default:
-        return 'ri-subtract-line';
+        return MdRemove;
     }
   };
 
@@ -57,6 +59,9 @@ export default function StatsCard({
     }
   };
 
+  const IconComponent = icon;
+  const TrendIcon = change ? getTrendIcon(change.trend) : null;
+
   return (
     <Card className={cn('p-6 relative', className)}>
       <div className="flex items-center justify-between">
@@ -67,27 +72,26 @@ export default function StatsCard({
           </p>
         </div>
         <div className={cn('p-2 rounded-lg', iconBgColor)}>
-          <i className={cn(icon, iconColor, 'text-xl w-6 h-6 flex items-center justify-center')}></i>
+          <IconComponent className={cn(iconColor, 'text-2xl')} />
         </div>
       </div>
-      
-      {change && (
+
+      {change && TrendIcon && (
         <div className="mt-2 flex items-center">
-          <i className={cn(
-            getTrendIcon(change.trend),
+          <TrendIcon className={cn(
             getTrendColor(change.trend),
-            'text-sm w-4 h-4 flex items-center justify-center mr-1'
-          )}></i>
+            'text-base mr-1'
+          )} />
           <span className={cn('text-sm', getTrendColor(change.trend))}>
             {change.trend !== 'neutral' && (change.trend === 'up' ? '+' : '')}{change.value}%
           </span>
           <span className="text-sm text-gray-500 ml-2">{change.label}</span>
         </div>
       )}
-      
+
       {locked && (
         <div className="absolute inset-0 bg-white bg-opacity-60 backdrop-blur-sm rounded-lg flex items-center justify-center">
-          <i className="ri-lock-line text-gray-400 text-2xl"></i>
+          <MdLock className="text-gray-400 text-3xl" />
         </div>
       )}
     </Card>

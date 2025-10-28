@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
+import { MdArrowBack, MdLogout } from "react-icons/md";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -48,7 +49,7 @@ export default function AdminLayout({
                   href={backHref}
                   className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                 >
-                  <i className="ri-arrow-left-line text-gray-600 text-xl w-5 h-5 flex items-center justify-center"></i>
+                  <MdArrowBack className="text-gray-600 text-xl" />
                 </Link>
               )}
               <h1 className="text-xl font-semibold text-gray-900">{title}</h1>
@@ -74,7 +75,7 @@ export default function AdminLayout({
                 onClick={handleSignOut}
                 className="text-gray-600 hover:text-gray-900"
               >
-                <i className="ri-logout-line mr-2"></i>
+                <MdLogout className="mr-2" />
                 ログアウト
               </Button>
 

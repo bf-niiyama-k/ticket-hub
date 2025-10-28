@@ -4,6 +4,17 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { AdminLayout, StatsCard } from '@/components';
+import {
+  MdEventNote,
+  MdConfirmationNumber,
+  MdCurrencyYen,
+  MdToday,
+  MdPerson,
+  MdShoppingCart,
+  MdQrCodeScanner,
+  MdBarChart,
+  MdWorkspacePremium
+} from 'react-icons/md';
 
 export default function AdminDashboard() {
   const [stats] = useState({
@@ -26,23 +37,23 @@ export default function AdminDashboard() {
           <StatsCard
             title="総イベント数"
             value={stats.totalEvents}
-            icon="ri-calendar-event-line"
+            icon={MdEventNote}
             iconColor="text-blue-600"
             iconBgColor="bg-blue-100"
           />
-          
+
           <StatsCard
             title="チケット販売数"
             value={stats.totalTicketsSold}
-            icon="ri-ticket-2-line"
+            icon={MdConfirmationNumber}
             iconColor="text-green-600"
             iconBgColor="bg-green-100"
           />
-          
+
           <StatsCard
             title="総売上"
             value={`¥${stats.totalRevenue.toLocaleString()}`}
-            icon="ri-money-yen-circle-line"
+            icon={MdCurrencyYen}
             iconColor="text-purple-600"
             iconBgColor="bg-purple-100"
             change={{
@@ -51,11 +62,11 @@ export default function AdminDashboard() {
               trend: "up"
             }}
           />
-          
+
           <StatsCard
             title="今日の販売数"
             value={stats.todaysSales}
-            icon="ri-today-line"
+            icon={MdToday}
             iconColor="text-orange-600"
             iconBgColor="bg-orange-100"
           />
@@ -69,7 +80,7 @@ export default function AdminDashboard() {
           >
             <div className="flex items-center mb-4">
               <div className="p-3 bg-blue-100 rounded-lg">
-                <i className="ri-calendar-event-line text-blue-600 text-2xl w-8 h-8 flex items-center justify-center"></i>
+                <MdEventNote className="text-blue-600 text-3xl" />
               </div>
               <h3 className="ml-4 text-lg font-semibold text-gray-900">イベント管理</h3>
             </div>
@@ -82,7 +93,7 @@ export default function AdminDashboard() {
           >
             <div className="flex items-center mb-4">
               <div className="p-3 bg-purple-100 rounded-lg">
-                <i className="ri-user-line text-purple-600 text-2xl w-8 h-8 flex items-center justify-center"></i>
+                <MdPerson className="text-purple-600 text-3xl" />
               </div>
               <h3 className="ml-4 text-lg font-semibold text-gray-900">顧客管理</h3>
             </div>
@@ -95,7 +106,7 @@ export default function AdminDashboard() {
           >
             <div className="flex items-center mb-4">
               <div className="p-3 bg-orange-100 rounded-lg">
-                <i className="ri-shopping-cart-line text-orange-600 text-2xl w-8 h-8 flex items-center justify-center"></i>
+                <MdShoppingCart className="text-orange-600 text-3xl" />
               </div>
               <h3 className="ml-4 text-lg font-semibold text-gray-900">注文管理</h3>
             </div>
@@ -108,7 +119,7 @@ export default function AdminDashboard() {
           >
             <div className="flex items-center mb-4">
               <div className="p-3 bg-indigo-100 rounded-lg">
-                <i className="ri-qr-scan-2-line text-indigo-600 text-2xl w-8 h-8 flex items-center justify-center"></i>
+                <MdQrCodeScanner className="text-indigo-600 text-3xl" />
               </div>
               <h3 className="ml-4 text-lg font-semibold text-gray-900">QRコード照合</h3>
             </div>
@@ -123,7 +134,7 @@ export default function AdminDashboard() {
             >
               <div className="flex items-center mb-4">
                 <div className="p-3 bg-red-100 rounded-lg">
-                  <i className="ri-bar-chart-line text-red-600 text-2xl w-8 h-8 flex items-center justify-center"></i>
+                  <MdBarChart className="text-red-600 text-3xl" />
                 </div>
                 <h3 className="ml-4 text-lg font-semibold text-gray-900">売上分析</h3>
               </div>
@@ -136,7 +147,7 @@ export default function AdminDashboard() {
             >
               <div className="flex items-center mb-4">
                 <div className="p-3 bg-red-100 rounded-lg">
-                  <i className="ri-bar-chart-line text-red-600 text-2xl w-8 h-8 flex items-center justify-center"></i>
+                  <MdBarChart className="text-red-600 text-3xl" />
                 </div>
                 <h3 className="ml-4 text-lg font-semibold text-gray-900">売上分析</h3>
                 <div className="ml-auto px-2 py-1 bg-orange-100 text-orange-800 rounded-full text-xs">
@@ -152,7 +163,7 @@ export default function AdminDashboard() {
             <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg shadow-sm p-6 border-2 border-dashed border-blue-200">
               <div className="flex items-center mb-4">
                 <div className="p-3 bg-blue-100 rounded-lg">
-                  <i className="ri-vip-crown-line text-blue-600 text-2xl w-8 h-8 flex items-center justify-center"></i>
+                  <MdWorkspacePremium className="text-blue-600 text-3xl" />
                 </div>
                 <h3 className="ml-4 text-lg font-semibold text-gray-900">プレミアムプラン</h3>
               </div>
@@ -173,7 +184,7 @@ export default function AdminDashboard() {
             <div className="space-y-4">
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-green-100 rounded-full">
-                  <i className="ri-ticket-2-line text-green-600 text-sm w-4 h-4 flex items-center justify-center"></i>
+                  <MdConfirmationNumber className="text-green-600 text-base" />
                 </div>
                 <div>
                   <p className="text-sm text-gray-900">新しいチケット購入がありました</p>
@@ -183,7 +194,7 @@ export default function AdminDashboard() {
 
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-blue-100 rounded-full">
-                  <i className="ri-calendar-event-line text-blue-600 text-sm w-4 h-4 flex items-center justify-center"></i>
+                  <MdEventNote className="text-blue-600 text-base" />
                 </div>
                 <div>
                   <p className="text-sm text-gray-900">新しいイベントが公開されました</p>
@@ -193,7 +204,7 @@ export default function AdminDashboard() {
 
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-purple-100 rounded-full">
-                  <i className="ri-user-line text-purple-600 text-sm w-4 h-4 flex items-center justify-center"></i>
+                  <MdPerson className="text-purple-600 text-base" />
                 </div>
                 <div>
                   <p className="text-sm text-gray-900">新規ユーザーが登録しました</p>

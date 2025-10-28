@@ -5,6 +5,15 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useOrders, useCustomers, useEvents } from '@/hooks';
 import type { OrderWithItems } from '@/types/database';
+import {
+  MdArrowBack,
+  MdShoppingCart,
+  MdCheck,
+  MdSchedule,
+  MdCurrencyYen,
+  MdSearch,
+  MdClose
+} from 'react-icons/md';
 
 export default function OrderManagement() {
   const { orders, loading, error, updateOrder } = useOrders();
@@ -160,11 +169,11 @@ export default function OrderManagement() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
-              <Link 
+              <Link
                 href="/admin"
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                <i className="ri-arrow-left-line text-gray-600 text-xl w-5 h-5 flex items-center justify-center"></i>
+                <MdArrowBack className="text-gray-600 text-xl w-5 h-5" />
               </Link>
               <h1 className="text-xl font-semibold text-gray-900">注文管理</h1>
             </div>
@@ -178,7 +187,7 @@ export default function OrderManagement() {
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center">
               <div className="p-2 bg-blue-100 rounded-lg">
-                <i className="ri-shopping-cart-line text-blue-600 text-xl w-6 h-6 flex items-center justify-center"></i>
+                <MdShoppingCart className="text-blue-600 text-xl w-6 h-6" />
               </div>
               <div className="ml-4">
                 <p className="text-sm text-gray-600">総注文数</p>
@@ -190,7 +199,7 @@ export default function OrderManagement() {
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center">
               <div className="p-2 bg-green-100 rounded-lg">
-                <i className="ri-check-line text-green-600 text-xl w-6 h-6 flex items-center justify-center"></i>
+                <MdCheck className="text-green-600 text-xl w-6 h-6" />
               </div>
               <div className="ml-4">
                 <p className="text-sm text-gray-600">完了注文</p>
@@ -204,7 +213,7 @@ export default function OrderManagement() {
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center">
               <div className="p-2 bg-yellow-100 rounded-lg">
-                <i className="ri-time-line text-yellow-600 text-xl w-6 h-6 flex items-center justify-center"></i>
+                <MdSchedule className="text-yellow-600 text-xl w-6 h-6" />
               </div>
               <div className="ml-4">
                 <p className="text-sm text-gray-600">処理中注文</p>
@@ -218,7 +227,7 @@ export default function OrderManagement() {
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center">
               <div className="p-2 bg-purple-100 rounded-lg">
-                <i className="ri-money-yen-circle-line text-purple-600 text-xl w-6 h-6 flex items-center justify-center"></i>
+                <MdCurrencyYen className="text-purple-600 text-xl w-6 h-6" />
               </div>
               <div className="ml-4">
                 <p className="text-sm text-gray-600">総売上</p>
@@ -245,7 +254,7 @@ export default function OrderManagement() {
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm w-full sm:w-64"
                   />
-                  <i className="ri-search-line absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                  <MdSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 </div>
 
                 <select
@@ -357,7 +366,7 @@ export default function OrderManagement() {
                 onClick={() => setShowDetailModal(false)}
                 className="p-1 hover:bg-gray-100 rounded"
               >
-                <i className="ri-close-line text-gray-600 text-xl w-5 h-5 flex items-center justify-center"></i>
+                <MdClose className="text-gray-600 text-xl w-5 h-5" />
               </button>
             </div>
             
